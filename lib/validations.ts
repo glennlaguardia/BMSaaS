@@ -122,7 +122,7 @@ export const rateAdjustmentSchema = z.object({
 export const websiteSectionSchema = z.object({
   is_visible: z.boolean().optional(),
   sort_order: z.number().int().optional(),
-  content: z.record(z.unknown()).optional(),
+  content: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ---- Contact / Inquiry ----
