@@ -11,8 +11,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Debug log to diagnose UUID issues
+    console.log('[Booking] Received payload:', JSON.stringify({
+      room_id: body.room_id,
+      accommodation_type_id: body.accommodation_type_id,
+      addon_ids: body.addon_ids,
+    }));
+
     const parsed = createBookingSchema.safeParse(body);
     if (!parsed.success) {
+      console.log('[Booking] Validation failed:', JSON.stringify(parsed.error.flatten()));
       return NextResponse.json(
         { success: false, error: 'Invalid booking data', details: parsed.error.flatten() },
         { status: 400 }
@@ -45,7 +54,7 @@ export async function POST(request: NextRequest) {
       p_source: data.source || 'online',
       p_created_by: null,
       p_addon_ids: data.addon_ids || [],
-      p_addon_quantities: data.addon_ids?.map(() => 1) || [],
+      p_addon_quantities: data.addon_quantities || data.addon_ids?.map(() => 1) || [],
       p_addon_prices: body.addon_prices || [],
     });
 

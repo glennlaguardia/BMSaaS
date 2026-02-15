@@ -12,15 +12,14 @@ import {
   Bed,
   Package,
   Percent,
-  PanelLeft,
-  FileText,
-  Globe,
   Palette,
-  Eye,
   BarChart3,
   ClipboardList,
   Settings,
   LogOut,
+  Menu,
+  X,
+  Leaf,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -57,9 +56,7 @@ const navSections = [
   {
     label: 'Website',
     items: [
-      { href: '/goat/site/sections', label: 'Sections', icon: PanelLeft },
-      { href: '/goat/site/branding', label: 'Branding', icon: Palette },
-      { href: '/goat/site/preview', label: 'Preview', icon: Eye },
+      { href: '/goat/site-builder', label: 'Site Builder', icon: Palette },
     ],
   },
   {
@@ -93,15 +90,20 @@ export function AdminSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-md bg-white shadow-md border border-zinc-200"
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-white shadow-md border border-forest-100/30 hover:bg-forest-50 transition-colors"
+        aria-label="Toggle navigation"
       >
-        <FileText className="w-5 h-5 text-zinc-600" />
+        {isOpen ? (
+          <X className="w-5 h-5 text-forest-500" />
+        ) : (
+          <Menu className="w-5 h-5 text-forest-500" />
+        )}
       </button>
 
       {/* Overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-forest-700/30 backdrop-blur-sm z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -109,24 +111,28 @@ export function AdminSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-64 bg-white border-r border-zinc-200 z-40 flex flex-col transition-transform duration-200',
+          'fixed top-0 left-0 h-full w-64 bg-white border-r border-forest-100/30 z-40 flex flex-col transition-transform duration-300 ease-out',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo */}
-        <div className="h-14 flex items-center px-4 border-b border-zinc-200">
-          <Link href="/goat/dashboard" className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-emerald-700" />
-            <span className="font-semibold text-zinc-900">BudaBook</span>
-            <span className="text-xs text-zinc-400 font-normal">Admin</span>
+        <div className="h-16 flex items-center px-5 border-b border-forest-100/20">
+          <Link href="/goat/dashboard" className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-forest-500 flex items-center justify-center">
+              <Leaf className="w-4 h-4 text-amber-300" />
+            </div>
+            <div>
+              <span className="font-semibold text-forest-700 text-[15px]">BudaBook</span>
+              <span className="text-[10px] text-forest-500/35 font-semibold tracking-wider uppercase ml-1.5">Admin</span>
+            </div>
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3">
+        <nav className="flex-1 overflow-y-auto py-4 px-3">
           {navSections.map((section) => (
-            <div key={section.label} className="mb-4">
-              <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider px-2 mb-1">
+            <div key={section.label} className="mb-5">
+              <p className="text-[10px] font-bold text-forest-500/30 uppercase tracking-[0.15em] px-2.5 mb-1.5">
                 {section.label}
               </p>
               {section.items.map((item) => {
@@ -138,13 +144,13 @@ export function AdminSidebar() {
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      'flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors',
+                      'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] transition-all duration-200',
                       isActive
-                        ? 'bg-emerald-50 text-emerald-800 font-medium'
-                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                        ? 'bg-forest-50 text-forest-600 font-semibold shadow-sm'
+                        : 'text-forest-500/55 hover:bg-forest-50/50 hover:text-forest-500'
                     )}
                   >
-                    <Icon className={cn('w-4 h-4', isActive ? 'text-emerald-700' : 'text-zinc-400')} />
+                    <Icon className={cn('w-4 h-4', isActive ? 'text-forest-500' : 'text-forest-500/35')} />
                     {item.label}
                   </Link>
                 );
@@ -154,12 +160,12 @@ export function AdminSidebar() {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-zinc-200">
+        <div className="p-3 border-t border-forest-100/20">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 w-full transition-colors"
+            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-forest-500/50 hover:bg-red-50 hover:text-red-600 w-full transition-all duration-200"
           >
-            <LogOut className="w-4 h-4 text-zinc-400" />
+            <LogOut className="w-4 h-4" />
             Sign Out
           </button>
         </div>

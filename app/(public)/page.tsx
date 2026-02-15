@@ -41,11 +41,11 @@ export default async function HomePage() {
 
   if (!tenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8]">
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#2D5016]">BudaBook</h1>
-          <p className="text-stone-500 mt-2">Resort not found or not yet configured.</p>
-          <p className="text-sm text-stone-400 mt-1">
+          <h1 className="text-2xl font-bold text-forest-700">BudaBook</h1>
+          <p className="text-forest-500/50 mt-2">Resort not found or not yet configured.</p>
+          <p className="text-sm text-forest-500/35 mt-1">
             Check back soon or contact the resort directly.
           </p>
         </div>

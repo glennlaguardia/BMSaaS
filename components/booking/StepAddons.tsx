@@ -32,8 +32,8 @@ export function StepAddons({ state, updateState, addons }: StepAddonsProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#2D5016] mb-1">Enhance Your Stay</h2>
-      <p className="text-sm text-stone-500 mb-6">
+      <h2 className="text-xl font-bold text-forest-500 mb-1">Enhance Your Stay</h2>
+      <p className="text-sm text-forest-500/45 mb-6">
         Add experiences and meals to make your visit unforgettable. These are optional.
       </p>
 
@@ -55,38 +55,38 @@ export function StepAddons({ state, updateState, addons }: StepAddonsProps) {
               className={cn(
                 'text-left p-4 rounded-xl border-2 transition-all',
                 selected
-                  ? 'border-[#D4A574] bg-[#D4A574]/5'
+                  ? 'border-amber-300 bg-amber-300/5'
                   : 'border-stone-200 hover:border-stone-300 bg-white'
               )}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-zinc-900">{addon.name}</h3>
+                    <h3 className="font-semibold text-forest-700">{addon.name}</h3>
                     {selected ? (
-                      <div className="w-5 h-5 rounded-full bg-[#D4A574] flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-amber-300 flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-stone-300 flex items-center justify-center">
-                        <Plus className="w-3 h-3 text-stone-400" />
+                        <Plus className="w-3 h-3 text-forest-500/35" />
                       </div>
                     )}
                   </div>
                   {addon.description && (
-                    <p className="text-sm text-stone-500 mt-1">{addon.description}</p>
+                    <p className="text-sm text-forest-500/45 mt-1">{addon.description}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
+                    <span className="text-xs bg-stone-100 text-forest-500/45 px-2 py-0.5 rounded-full">
                       {addon.category}
                     </span>
-                    <span className="text-xs text-stone-400">{priceDisplay}</span>
+                    <span className="text-xs text-forest-500/35">{priceDisplay}</span>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-[#2D5016]">{formatPHP(estimatedTotal)}</p>
+                  <p className="font-bold text-forest-500">{formatPHP(estimatedTotal)}</p>
                   {addon.pricing_model === 'per_person' && totalPax > 1 && (
-                    <p className="text-xs text-stone-400">for {totalPax} guests</p>
+                    <p className="text-xs text-forest-500/35">for {totalPax} guests</p>
                   )}
                 </div>
               </div>
@@ -96,7 +96,7 @@ export function StepAddons({ state, updateState, addons }: StepAddonsProps) {
       </div>
 
       {addons.length === 0 && (
-        <p className="text-center text-stone-500 py-8">
+        <p className="text-center text-forest-500/45 py-8">
           No add-ons available at this time.
         </p>
       )}

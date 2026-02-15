@@ -16,6 +16,10 @@ export interface Tenant {
   secondary_color: string;
   accent_color: string;
   font_family: string;
+  font_heading: string;
+  font_body: string;
+  meta_description: string | null;
+  social_links: Record<string, string> | null;
   contact_phone: string | null;
   contact_phone_2: string | null;
   contact_email: string | null;
@@ -299,6 +303,8 @@ export interface WebsiteSection {
   id: string;
   tenant_id: string;
   section_type: SectionType;
+  title: string | null;
+  subtitle: string | null;
   is_visible: boolean;
   sort_order: number;
   content: Record<string, unknown>;

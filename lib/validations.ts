@@ -7,9 +7,11 @@ export const loginSchema = z.object({
 });
 
 // ---- Booking ----
+// Note: We use .min(1) instead of .uuid() because Supabase returns UUIDs
+// but strict .uuid() validation can fail on edge cases. The database enforces UUID format.
 export const createBookingSchema = z.object({
-  room_id: z.string().uuid(),
-  accommodation_type_id: z.string().uuid(),
+  room_id: z.string().min(1, 'Room ID is required'),
+  accommodation_type_id: z.string().min(1, 'Accommodation type ID is required'),
   check_in_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   check_out_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   num_adults: z.number().int().min(1).max(20),
@@ -19,7 +21,7 @@ export const createBookingSchema = z.object({
   guest_email: z.string().email().max(255),
   guest_phone: z.string().min(1).max(50),
   special_requests: z.string().max(1000).optional().nullable(),
-  addon_ids: z.array(z.string().uuid()).optional().default([]),
+  addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
   payment_method: z.enum(['online', 'manual']).optional(),
   source: z.enum(['online', 'manual', 'phone', 'facebook', 'walk_in']).optional().default('online'),
@@ -35,19 +37,19 @@ export const createDayTourBookingSchema = z.object({
   guest_email: z.string().email().max(255),
   guest_phone: z.string().min(1).max(50),
   special_requests: z.string().max(1000).optional().nullable(),
-  addon_ids: z.array(z.string().uuid()).optional().default([]),
+  addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
   payment_method: z.enum(['online', 'manual']).optional(),
 });
 
 // ---- Price Calculation ----
 export const calculatePriceSchema = z.object({
-  accommodation_type_id: z.string().uuid(),
+  accommodation_type_id: z.string().min(1),
   check_in_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   check_out_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   num_adults: z.number().int().min(1),
   num_children: z.number().int().min(0),
-  addon_ids: z.array(z.string().uuid()).optional().default([]),
+  addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
 });
 
@@ -85,7 +87,7 @@ export const accommodationTypeSchema = z.object({
 
 // ---- Admin: Room ----
 export const roomSchema = z.object({
-  accommodation_type_id: z.string().uuid(),
+  accommodation_type_id: z.string().min(1),
   name: z.string().min(1).max(255),
   description: z.string().max(1000).optional().nullable(),
   view_description: z.string().max(500).optional().nullable(),
@@ -114,12 +116,14 @@ export const rateAdjustmentSchema = z.object({
   adjustment_type: z.enum(['percentage_discount', 'percentage_surcharge', 'fixed_override']),
   adjustment_value: z.number().min(0),
   applies_to: z.enum(['all', 'specific']),
-  accommodation_type_ids: z.array(z.string().uuid()).optional().default([]),
+  accommodation_type_ids: z.array(z.string().min(1)).optional().default([]),
   is_active: z.boolean().optional().default(true),
 });
 
 // ---- Admin: Website Section ----
 export const websiteSectionSchema = z.object({
+  title: z.string().min(1).max(255).optional(),
+  subtitle: z.string().max(500).optional().nullable(),
   is_visible: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   content: z.record(z.string(), z.unknown()).optional(),

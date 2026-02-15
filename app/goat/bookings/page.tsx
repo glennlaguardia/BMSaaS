@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Eye, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { formatDate, statusLabel, statusColor } from '@/lib/utils';
 import { formatPHP } from '@/lib/pricing';
 import Link from 'next/link';
@@ -60,9 +60,15 @@ export default function BookingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Bookings</h1>
-          <p className="text-sm text-zinc-500 mt-1">{total} total bookings</p>
+          <h1 className="text-2xl font-bold text-forest-700">Bookings</h1>
+          <p className="text-sm text-forest-500/45 mt-1">{total} total bookings</p>
         </div>
+        <Button asChild>
+          <Link href="/goat/bookings/new">
+            <Plus className="w-4 h-4 mr-2" />
+            New Booking
+          </Link>
+        </Button>
       </div>
 
       {/* Filters */}
@@ -70,7 +76,7 @@ export default function BookingsPage() {
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-forest-500/35" />
               <Input
                 placeholder="Search by reference, name, or email..."
                 value={search}
@@ -105,39 +111,39 @@ export default function BookingsPage() {
         <CardContent>
           {loading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-forest-500/35" />
             </div>
           ) : bookings.length === 0 ? (
-            <p className="text-center text-zinc-500 py-12">No bookings found.</p>
+            <p className="text-center text-forest-500/45 py-12">No bookings found.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500">Ref</th>
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500">Guest</th>
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500 hidden md:table-cell">Room</th>
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500 hidden lg:table-cell">Dates</th>
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500">Status</th>
-                    <th className="text-left py-3 px-2 font-medium text-zinc-500">Payment</th>
-                    <th className="text-right py-3 px-2 font-medium text-zinc-500">Amount</th>
-                    <th className="text-right py-3 px-2 font-medium text-zinc-500"></th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45">Ref</th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45">Guest</th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45 hidden md:table-cell">Room</th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45 hidden lg:table-cell">Dates</th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45">Status</th>
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45">Payment</th>
+                    <th className="text-right py-3 px-2 font-medium text-forest-500/45">Amount</th>
+                    <th className="text-right py-3 px-2 font-medium text-forest-500/45"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map((booking) => (
-                    <tr key={booking.id} className="border-b last:border-0 hover:bg-zinc-50">
+                    <tr key={booking.id} className="border-b last:border-0 hover:bg-forest-50">
                       <td className="py-3 px-2">
-                        <span className="font-mono text-xs text-zinc-900">{booking.reference_number}</span>
+                        <span className="font-mono text-xs text-forest-700">{booking.reference_number}</span>
                       </td>
                       <td className="py-3 px-2">
-                        <p className="font-medium text-zinc-900">{booking.guest_first_name} {booking.guest_last_name}</p>
-                        <p className="text-xs text-zinc-400">{booking.guest_email}</p>
+                        <p className="font-medium text-forest-700">{booking.guest_first_name} {booking.guest_last_name}</p>
+                        <p className="text-xs text-forest-500/35">{booking.guest_email}</p>
                       </td>
-                      <td className="py-3 px-2 hidden md:table-cell text-zinc-600">
+                      <td className="py-3 px-2 hidden md:table-cell text-forest-500/60">
                         {booking.rooms?.name || '—'}
                       </td>
-                      <td className="py-3 px-2 hidden lg:table-cell text-zinc-600 text-xs">
+                      <td className="py-3 px-2 hidden lg:table-cell text-forest-500/60 text-xs">
                         {formatDate(booking.check_in_date)} — {formatDate(booking.check_out_date)}
                       </td>
                       <td className="py-3 px-2">
@@ -146,7 +152,7 @@ export default function BookingsPage() {
                       <td className="py-3 px-2">
                         <Badge variant={statusColor(booking.payment_status)}>{statusLabel(booking.payment_status)}</Badge>
                       </td>
-                      <td className="py-3 px-2 text-right font-medium text-zinc-900">
+                      <td className="py-3 px-2 text-right font-medium text-forest-700">
                         {formatPHP(booking.total_amount)}
                       </td>
                       <td className="py-3 px-2 text-right">
@@ -166,7 +172,7 @@ export default function BookingsPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-forest-500/45">
                 Page {page} of {totalPages}
               </p>
               <div className="flex gap-2">

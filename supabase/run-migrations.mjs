@@ -33,8 +33,13 @@ if (!DB_PASSWORD) {
   process.exit(1);
 }
 
-// Connection string — override with full string via env, or build from password
-const connectionString = process.env.DATABASE_URL || `postgresql://postgres.${PROJECT_REF}:${encodeURIComponent(DB_PASSWORD)}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres`;
+// Connection string — provide your FULL connection string via DATABASE_URL env var
+// Find it in: Supabase Dashboard > Project Settings > Database > Connection string (URI)
+// Copy the Session Mode (port 5432) connection string and set it as DATABASE_URL
+const connectionString = process.env.DATABASE_URL || `postgresql://postgres.${PROJECT_REF}:${encodeURIComponent(DB_PASSWORD)}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`;
+
+console.log(`Using connection: ${connectionString.replace(/:[^@]+@/, ':***@')}`);
+console.log('If this fails, set DATABASE_URL env var to your exact Supabase connection string.');
 
 const migrations = [
   '001_create_tables.sql',

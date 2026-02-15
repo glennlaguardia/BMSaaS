@@ -28,22 +28,22 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 md:py-20 text-center">
-      <div className="w-16 h-16 rounded-full bg-[#2D5016] flex items-center justify-center mx-auto mb-6">
+      <div className="w-16 h-16 rounded-full bg-forest-500 flex items-center justify-center mx-auto mb-6">
         <CheckCircle className="w-8 h-8 text-white" />
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-bold text-[#2D5016]">
+      <h1 className="text-2xl md:text-3xl font-bold text-forest-500">
         Booking Submitted!
       </h1>
-      <p className="text-stone-500 mt-2">
+      <p className="text-forest-500/45 mt-2">
         Your booking has been received. Please complete payment within 48 hours.
       </p>
 
       {/* Reference Number */}
       <div className="mt-8 p-6 bg-white rounded-2xl border border-stone-200 shadow-sm">
-        <p className="text-sm text-stone-500 mb-2">Your Reference Number</p>
+        <p className="text-sm text-forest-500/45 mb-2">Your Reference Number</p>
         <div className="flex items-center justify-center gap-3">
-          <span className="text-2xl md:text-3xl font-bold tracking-wider text-[#2D5016]">
+          <span className="text-2xl md:text-3xl font-bold tracking-wider text-forest-500">
             {state.referenceNumber}
           </span>
           <button
@@ -51,10 +51,10 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
             className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
             title="Copy reference number"
           >
-            <Copy className="w-4 h-4 text-stone-400" />
+            <Copy className="w-4 h-4 text-forest-500/35" />
           </button>
         </div>
-        {copied && <p className="text-xs text-[#2D5016] mt-1">Copied!</p>}
+        {copied && <p className="text-xs text-forest-500 mt-1">Copied!</p>}
       </div>
 
       {/* Payment Instructions */}
@@ -79,7 +79,7 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
 
       {/* Actions */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Button asChild className="bg-[#2D5016] hover:bg-[#1e3a0f] text-white rounded-full px-8">
+        <Button asChild className="bg-forest-500 hover:bg-forest-600 text-white rounded-full px-8">
           <Link href="/">
             <Home className="w-4 h-4 mr-2" />
             Back to Home
@@ -87,7 +87,7 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
         </Button>
       </div>
 
-      <p className="text-xs text-stone-400 mt-6">
+      <p className="text-xs text-forest-500/35 mt-6">
         A confirmation details will be sent to <strong>{state.email}</strong> once payment is verified.
       </p>
     </div>

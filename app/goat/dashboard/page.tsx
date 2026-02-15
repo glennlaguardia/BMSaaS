@@ -1,19 +1,70 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  CalendarDays,
-  BookOpen,
-  DollarSign,
-  Users,
-  TrendingUp,
-  BedDouble,
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, CalendarDays, BookOpen, DollarSign, Users, BedDouble, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { formatPHP } from '@/lib/pricing';
+import { statusLabel, statusColor, formatDate } from '@/lib/utils';
+
+interface DashboardData {
+  todayCheckins: number;
+  activeBookings: number;
+  monthlyRevenue: number;
+  totalGuests: number;
+  occupancyRate: number;
+  pendingPayments: number;
+  recentBookings: Array<{
+    id: string;
+    reference_number: string;
+    guest_first_name: string;
+    guest_last_name: string;
+    status: string;
+    total_amount: number;
+    created_at: string;
+    accommodation_types: { name: string } | null;
+  }>;
+  upcomingCheckins: Array<{
+    id: string;
+    reference_number: string;
+    guest_first_name: string;
+    guest_last_name: string;
+    check_in_date: string;
+    check_out_date: string;
+    status: string;
+    rooms: { name: string } | null;
+    accommodation_types: { name: string } | null;
+  }>;
+}
 
 export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/admin/dashboard')
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.success) setData(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-forest-500/35" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
-        <p className="text-sm text-zinc-500 mt-1">
+        <h1 className="text-2xl font-bold text-forest-700">Dashboard</h1>
+        <p className="text-sm text-forest-500/45 mt-1 font-medium">
           Welcome back. Here&apos;s an overview of your resort.
         </p>
       </div>
@@ -22,68 +73,125 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard
           title="Today's Check-ins"
-          value="—"
-          subtitle="No data yet"
+          value={data?.todayCheckins?.toString() ?? '0'}
+          subtitle="Guests arriving today"
           icon={CalendarDays}
-          color="blue"
+          color="forest"
         />
         <MetricCard
           title="Active Bookings"
-          value="—"
-          subtitle="No data yet"
+          value={data?.activeBookings?.toString() ?? '0'}
+          subtitle="Confirmed, paid, or checked in"
           icon={BookOpen}
-          color="emerald"
-        />
-        <MetricCard
-          title="Monthly Revenue"
-          value="—"
-          subtitle="No data yet"
-          icon={DollarSign}
           color="amber"
         />
         <MetricCard
+          title="Monthly Revenue"
+          value={data ? formatPHP(data.monthlyRevenue) : '₱0'}
+          subtitle="Revenue this month"
+          icon={DollarSign}
+          color="forest"
+        />
+        <MetricCard
           title="Total Guests"
-          value="—"
-          subtitle="No data yet"
+          value={data?.totalGuests?.toString() ?? '0'}
+          subtitle="Unique guests all-time"
           icon={Users}
-          color="purple"
+          color="amber"
         />
         <MetricCard
           title="Occupancy Rate"
-          value="—"
-          subtitle="No data yet"
+          value={data ? `${data.occupancyRate}%` : '0%'}
+          subtitle="Next 7 days"
           icon={BedDouble}
-          color="rose"
+          color="forest"
         />
         <MetricCard
           title="Pending Payments"
-          value="—"
-          subtitle="No data yet"
+          value={data?.pendingPayments?.toString() ?? '0'}
+          subtitle="Unpaid or awaiting verification"
           icon={TrendingUp}
-          color="orange"
+          color="amber"
         />
       </div>
 
-      {/* Placeholder sections */}
+      {/* Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        {/* Recent Bookings */}
+        <Card className="border-forest-100/30 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base">Recent Bookings</CardTitle>
+            <CardTitle className="text-base font-bold text-forest-700">Recent Bookings</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-zinc-500">
-              Booking data will appear here once the database is connected and seeded.
-            </p>
+            {data?.recentBookings && data.recentBookings.length > 0 ? (
+              <div className="space-y-3">
+                {data.recentBookings.map((booking) => (
+                  <Link
+                    key={booking.id}
+                    href={`/goat/bookings/${booking.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-forest-50/50 transition-colors"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-forest-700">
+                        {booking.guest_first_name} {booking.guest_last_name}
+                      </p>
+                      <p className="text-xs text-forest-500/40">
+                        {booking.reference_number} &middot; {booking.accommodation_types?.name || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={statusColor(booking.status)} className="text-[10px]">
+                        {statusLabel(booking.status)}
+                      </Badge>
+                      <p className="text-xs font-medium text-forest-700 mt-1">
+                        {formatPHP(booking.total_amount)}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-forest-500/40">No bookings yet.</p>
+            )}
           </CardContent>
         </Card>
-        <Card>
+
+        {/* Upcoming Check-ins */}
+        <Card className="border-forest-100/30 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base">Upcoming Check-ins</CardTitle>
+            <CardTitle className="text-base font-bold text-forest-700">Upcoming Check-ins</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-zinc-500">
-              Upcoming check-ins will appear here.
-            </p>
+            {data?.upcomingCheckins && data.upcomingCheckins.length > 0 ? (
+              <div className="space-y-3">
+                {data.upcomingCheckins.map((booking) => (
+                  <Link
+                    key={booking.id}
+                    href={`/goat/bookings/${booking.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-forest-50/50 transition-colors"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-forest-700">
+                        {booking.guest_first_name} {booking.guest_last_name}
+                      </p>
+                      <p className="text-xs text-forest-500/40">
+                        {booking.rooms?.name || 'TBD'} &middot; {booking.accommodation_types?.name || 'N/A'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-forest-700">
+                        {formatDate(booking.check_in_date, 'MMM d')}
+                      </p>
+                      <Badge variant={statusColor(booking.status)} className="text-[10px]">
+                        {statusLabel(booking.status)}
+                      </Badge>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-forest-500/40">No upcoming check-ins.</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -105,24 +213,20 @@ function MetricCard({
   color: string;
 }) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
-    purple: 'bg-purple-50 text-purple-600',
-    rose: 'bg-rose-50 text-rose-600',
-    orange: 'bg-orange-50 text-orange-600',
+    forest: 'bg-forest-50 text-forest-500',
+    amber: 'bg-amber-50 text-amber-500',
   };
 
   return (
-    <Card>
+    <Card className="border-forest-100/30 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-zinc-500">{title}</p>
-            <p className="text-2xl font-bold text-zinc-900 mt-1">{value}</p>
-            <p className="text-xs text-zinc-400 mt-1">{subtitle}</p>
+            <p className="text-sm font-medium text-forest-500/50">{title}</p>
+            <p className="text-3xl font-bold text-forest-700 mt-1">{value}</p>
+            <p className="text-xs text-forest-500/30 mt-1 font-medium">{subtitle}</p>
           </div>
-          <div className={`p-2.5 rounded-lg ${colorMap[color] || colorMap.blue}`}>
+          <div className={`p-2.5 rounded-xl ${colorMap[color] || colorMap.forest}`}>
             <Icon className="w-5 h-5" />
           </div>
         </div>

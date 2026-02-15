@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +11,8 @@ import Link from 'next/link';
 import { formatDate, formatDateTime, statusLabel, statusColor } from '@/lib/utils';
 import { formatPHP } from '@/lib/pricing';
 
-export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function BookingDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [booking, setBooking] = useState<any>(null);
@@ -65,13 +65,13 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-forest-500/35" />
       </div>
     );
   }
 
   if (!booking) {
-    return <p className="text-zinc-500 text-center py-12">Booking not found.</p>;
+    return <p className="text-forest-500/45 text-center py-12">Booking not found.</p>;
   }
 
   return (
@@ -81,8 +81,8 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           <Link href="/goat/bookings"><ArrowLeft className="w-4 h-4" /></Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Booking {booking.reference_number}</h1>
-          <p className="text-sm text-zinc-500">Created {formatDateTime(booking.created_at)}</p>
+          <h1 className="text-2xl font-bold text-forest-700">Booking {booking.reference_number}</h1>
+          <p className="text-sm text-forest-500/45">Created {formatDateTime(booking.created_at)}</p>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-zinc-500 mb-2">Booking Status</p>
+                  <p className="text-sm text-forest-500/45 mb-2">Booking Status</p>
                   <Badge variant={statusColor(booking.status)} className="mb-3">{statusLabel(booking.status)}</Badge>
                   <Select value={booking.status} onValueChange={updateStatus} disabled={updating}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -113,7 +113,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                   </Select>
                 </div>
                 <div>
-                  <p className="text-sm text-zinc-500 mb-2">Payment Status</p>
+                  <p className="text-sm text-forest-500/45 mb-2">Payment Status</p>
                   <Badge variant={statusColor(booking.payment_status)} className="mb-3">{statusLabel(booking.payment_status)}</Badge>
                   <Select value={booking.payment_status} onValueChange={updatePaymentStatus} disabled={updating}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -137,25 +137,25 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-zinc-500">Name</p>
+                  <p className="text-forest-500/45">Name</p>
                   <p className="font-medium">{booking.guest_first_name} {booking.guest_last_name}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Email</p>
+                  <p className="text-forest-500/45">Email</p>
                   <p className="font-medium">{booking.guest_email}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Phone</p>
+                  <p className="text-forest-500/45">Phone</p>
                   <p className="font-medium">{booking.guest_phone}</p>
                 </div>
                 <div>
-                  <p className="text-zinc-500">Source</p>
+                  <p className="text-forest-500/45">Source</p>
                   <p className="font-medium capitalize">{booking.source}</p>
                 </div>
               </div>
               {booking.special_requests && (
                 <div className="mt-4 pt-4 border-t">
-                  <p className="text-zinc-500 text-sm">Special Requests</p>
+                  <p className="text-forest-500/45 text-sm">Special Requests</p>
                   <p className="text-sm mt-1">{booking.special_requests}</p>
                 </div>
               )}
@@ -174,14 +174,14 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                     .sort((a: { created_at: string }, b: { created_at: string }) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((log: { id: string; field_changed: string; old_value: string | null; new_value: string; change_source: string; notes: string | null; created_at: string }) => (
                     <div key={log.id} className="flex items-start gap-3 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-zinc-300 mt-1.5 flex-shrink-0" />
+                      <div className="w-2 h-2 rounded-full bg-forest-200 mt-1.5 flex-shrink-0" />
                       <div>
-                        <p className="text-zinc-700">
+                        <p className="text-forest-700">
                           <span className="font-medium">{statusLabel(log.field_changed)}</span> changed from{' '}
                           <Badge variant="outline" className="text-xs">{statusLabel(log.old_value || 'none')}</Badge> to{' '}
                           <Badge variant={statusColor(log.new_value)} className="text-xs">{statusLabel(log.new_value)}</Badge>
                         </p>
-                        <p className="text-xs text-zinc-400 mt-0.5">
+                        <p className="text-xs text-forest-500/35 mt-0.5">
                           {formatDateTime(log.created_at)} · {log.change_source}
                           {log.notes && ` · ${log.notes}`}
                         </p>
@@ -203,23 +203,23 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <p className="text-zinc-500">Accommodation</p>
+                <p className="text-forest-500/45">Accommodation</p>
                 <p className="font-medium">{booking.accommodation_types?.name || '—'}</p>
               </div>
               <div>
-                <p className="text-zinc-500">Room</p>
+                <p className="text-forest-500/45">Room</p>
                 <p className="font-medium">{booking.rooms?.name || '—'}</p>
               </div>
               <div>
-                <p className="text-zinc-500">Check-in</p>
+                <p className="text-forest-500/45">Check-in</p>
                 <p className="font-medium">{formatDate(booking.check_in_date, 'EEE, MMM d, yyyy')}</p>
               </div>
               <div>
-                <p className="text-zinc-500">Check-out</p>
+                <p className="text-forest-500/45">Check-out</p>
                 <p className="font-medium">{formatDate(booking.check_out_date, 'EEE, MMM d, yyyy')}</p>
               </div>
               <div>
-                <p className="text-zinc-500">Guests</p>
+                <p className="text-forest-500/45">Guests</p>
                 <p className="font-medium">
                   {booking.num_adults} adult{booking.num_adults > 1 ? 's' : ''}
                   {booking.num_children > 0 && `, ${booking.num_children} child${booking.num_children > 1 ? 'ren' : ''}`}
@@ -235,23 +235,23 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-zinc-500">Base Amount</span>
+                <span className="text-forest-500/45">Base Amount</span>
                 <span>{formatPHP(booking.base_amount)}</span>
               </div>
               {booking.pax_surcharge > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Pax Surcharge</span>
+                  <span className="text-forest-500/45">Pax Surcharge</span>
                   <span>{formatPHP(booking.pax_surcharge)}</span>
                 </div>
               )}
               {booking.addons_amount > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">Add-ons</span>
+                  <span className="text-forest-500/45">Add-ons</span>
                   <span>{formatPHP(booking.addons_amount)}</span>
                 </div>
               )}
               {booking.discount_amount > 0 && (
-                <div className="flex justify-between text-emerald-600">
+                <div className="flex justify-between text-forest-500">
                   <span>Discount</span>
                   <span>-{formatPHP(booking.discount_amount)}</span>
                 </div>

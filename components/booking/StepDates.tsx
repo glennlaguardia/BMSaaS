@@ -32,15 +32,15 @@ export function StepDates({ state, updateState, tenant }: StepDatesProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#2D5016] mb-1">Select Your Dates</h2>
-      <p className="text-sm text-stone-500 mb-6">
+      <h2 className="text-xl font-bold text-forest-500 mb-1">Select Your Dates</h2>
+      <p className="text-sm text-forest-500/45 mb-6">
         Choose your check-in and check-out dates for your stay.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-6 max-w-lg">
         <div>
-          <Label htmlFor="checkin" className="text-sm font-medium text-stone-700 flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-[#2D5016]" />
+          <Label htmlFor="checkin" className="text-sm font-medium text-forest-700 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-forest-500" />
             Check-in Date
           </Label>
           <Input
@@ -52,12 +52,12 @@ export function StepDates({ state, updateState, tenant }: StepDatesProps) {
             max={maxDate}
             className="mt-1.5"
           />
-          <p className="text-xs text-stone-400 mt-1">Check-in: {tenant.check_in_time || '3:00 PM'}</p>
+          <p className="text-xs text-forest-500/35 mt-1">Check-in: {tenant.check_in_time || '3:00 PM'}</p>
         </div>
 
         <div>
-          <Label htmlFor="checkout" className="text-sm font-medium text-stone-700 flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-[#2D5016]" />
+          <Label htmlFor="checkout" className="text-sm font-medium text-forest-700 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-forest-500" />
             Check-out Date
           </Label>
           <Input
@@ -69,15 +69,15 @@ export function StepDates({ state, updateState, tenant }: StepDatesProps) {
             max={maxDate}
             className="mt-1.5"
           />
-          <p className="text-xs text-stone-400 mt-1">Check-out: {tenant.check_out_time || '10:00 AM'}</p>
+          <p className="text-xs text-forest-500/35 mt-1">Check-out: {tenant.check_out_time || '10:00 AM'}</p>
         </div>
       </div>
 
       {nights > 0 && (
-        <div className="mt-6 flex items-center gap-2 text-sm bg-[#2D5016]/5 text-[#2D5016] px-4 py-3 rounded-lg">
+        <div className="mt-6 flex items-center gap-2 text-sm bg-forest-500/5 text-forest-500 px-4 py-3 rounded-lg">
           <Info className="w-4 h-4" />
           <span className="font-medium">{nights} night{nights > 1 ? 's' : ''}</span>
-          <span className="text-stone-500">
+          <span className="text-forest-500/45">
             — {format(new Date(state.checkIn), 'MMM d')} to {format(new Date(state.checkOut), 'MMM d, yyyy')}
           </span>
         </div>

@@ -46,8 +46,8 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#2D5016] mb-1">Number of Guests</h2>
-      <p className="text-sm text-stone-500 mb-6">
+      <h2 className="text-xl font-bold text-forest-500 mb-1">Number of Guests</h2>
+      <p className="text-sm text-forest-500/45 mb-6">
         {state.accommodationType?.name} accommodates {basePax} guests (max {maxPax}).
         {paxFee > 0 && ` Additional guests: ${formatPHP(paxFee)}/person/night.`}
       </p>
@@ -55,7 +55,7 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
       <div className="max-w-sm space-y-6">
         {/* Adults */}
         <div>
-          <Label className="text-sm font-medium text-stone-700">Adults</Label>
+          <Label className="text-sm font-medium text-forest-700">Adults</Label>
           <div className="flex items-center gap-4 mt-2">
             <Button
               variant="outline"
@@ -66,7 +66,7 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
             >
               <Minus className="w-4 h-4" />
             </Button>
-            <span className="text-2xl font-bold text-zinc-900 w-10 text-center">
+            <span className="text-2xl font-bold text-forest-700 w-10 text-center">
               {state.numAdults}
             </span>
             <Button
@@ -83,7 +83,7 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
 
         {/* Children */}
         <div>
-          <Label className="text-sm font-medium text-stone-700">Children</Label>
+          <Label className="text-sm font-medium text-forest-700">Children</Label>
           <div className="flex items-center gap-4 mt-2">
             <Button
               variant="outline"
@@ -94,7 +94,7 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
             >
               <Minus className="w-4 h-4" />
             </Button>
-            <span className="text-2xl font-bold text-zinc-900 w-10 text-center">
+            <span className="text-2xl font-bold text-forest-700 w-10 text-center">
               {state.numChildren}
             </span>
             <Button
@@ -113,12 +113,12 @@ export function StepGuests({ state, updateState }: StepGuestsProps) {
       {/* Summary */}
       <div className="mt-6 p-4 bg-stone-50 rounded-xl">
         <div className="flex items-center gap-2 text-sm">
-          <Users className="w-4 h-4 text-[#2D5016]" />
-          <span className="font-medium text-zinc-900">
+          <Users className="w-4 h-4 text-forest-500" />
+          <span className="font-medium text-forest-700">
             {totalPax} guest{totalPax > 1 ? 's' : ''} total
           </span>
           {extraPax > 0 && (
-            <span className="text-stone-500">
+            <span className="text-forest-500/45">
               ({extraPax} extra × {formatPHP(paxFee)}/night)
             </span>
           )}

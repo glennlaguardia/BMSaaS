@@ -2,24 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { BookingWizard } from '@/components/booking/BookingWizard';
+import { DayTourWizard } from '@/components/booking/DayTourWizard';
+import { cn } from '@/lib/utils';
+import { Bed, Sun } from 'lucide-react';
 import type { Tenant, AccommodationType, Addon } from '@/types';
 
 export default function BookingPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [types, setTypes] = useState<AccommodationType[]>([]);
-  const [addons, setAddons] = useState<Addon[]>([]);
+  const [overnightAddons, setOvernightAddons] = useState<Addon[]>([]);
+  const [dayTourAddons, setDayTourAddons] = useState<Addon[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingType, setBookingType] = useState<'overnight' | 'day_tour'>('overnight');
 
   useEffect(() => {
     Promise.all([
       fetch('/api/public/tenant').then(r => r.json()),
       fetch('/api/public/accommodation-types').then(r => r.json()),
       fetch('/api/public/addons?applies_to=overnight').then(r => r.json()),
+      fetch('/api/public/addons?applies_to=day_tour').then(r => r.json()),
     ])
-      .then(([tenantRes, typesRes, addonsRes]) => {
+      .then(([tenantRes, typesRes, overnightRes, dayTourRes]) => {
         if (tenantRes.success) setTenant(tenantRes.data);
         if (typesRes.success) setTypes(typesRes.data);
-        if (addonsRes.success) setAddons(addonsRes.data);
+        if (overnightRes.success) setOvernightAddons(overnightRes.data);
+        if (dayTourRes.success) setDayTourAddons(dayTourRes.data);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -27,10 +34,10 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8]">
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#2D5016] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-stone-500 mt-3">Loading booking...</p>
+          <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-forest-500/45 mt-3">Loading booking...</p>
         </div>
       </div>
     );
@@ -38,19 +45,56 @@ export default function BookingPage() {
 
   if (!tenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8]">
-        <p className="text-stone-500">Resort not found.</p>
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
+        <p className="text-forest-500/45">Resort not found.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8]">
-      <BookingWizard
-        tenant={tenant}
-        accommodationTypes={types}
-        addons={addons}
-      />
+    <div className="min-h-screen bg-cream-50">
+      {/* Booking Type Toggle */}
+      <div className="max-w-7xl mx-auto px-4 pt-8">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <button
+            onClick={() => setBookingType('overnight')}
+            className={cn(
+              'flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300',
+              bookingType === 'overnight'
+                ? 'bg-forest-500 text-white shadow-sm'
+                : 'bg-white text-forest-500/60 border border-forest-100/30 hover:border-forest-500/20'
+            )}
+          >
+            <Bed className="w-4 h-4" />
+            Overnight Stay
+          </button>
+          <button
+            onClick={() => setBookingType('day_tour')}
+            className={cn(
+              'flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300',
+              bookingType === 'day_tour'
+                ? 'bg-forest-500 text-white shadow-sm'
+                : 'bg-white text-forest-500/60 border border-forest-100/30 hover:border-forest-500/20'
+            )}
+          >
+            <Sun className="w-4 h-4" />
+            Day Tour / Walk-in
+          </button>
+        </div>
+      </div>
+
+      {bookingType === 'overnight' ? (
+        <BookingWizard
+          tenant={tenant}
+          accommodationTypes={types}
+          addons={overnightAddons}
+        />
+      ) : (
+        <DayTourWizard
+          tenant={tenant}
+          addons={dayTourAddons}
+        />
+      )}
     </div>
   );
 }

@@ -40,16 +40,16 @@ export function StepRoom({ state, updateState }: StepRoomProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-[#2D5016]" />
-        <span className="ml-2 text-sm text-stone-500">Loading rooms...</span>
+        <Loader2 className="w-6 h-6 animate-spin text-forest-500" />
+        <span className="ml-2 text-sm text-forest-500/45">Loading rooms...</span>
       </div>
     );
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#2D5016] mb-1">Choose Your Room</h2>
-      <p className="text-sm text-stone-500 mb-6">
+      <h2 className="text-xl font-bold text-forest-500 mb-1">Choose Your Room</h2>
+      <p className="text-sm text-forest-500/45 mb-6">
         Select a specific {state.accommodationType?.name || 'room'} for your stay.
       </p>
 
@@ -69,16 +69,16 @@ export function StepRoom({ state, updateState }: StepRoomProps) {
                 !isAvailable
                   ? 'border-stone-100 bg-stone-50 opacity-60'
                   : isSelected
-                  ? 'border-[#2D5016] bg-[#2D5016]/5'
+                  ? 'border-forest-500 bg-forest-500/5'
                   : 'border-stone-200 hover:border-stone-300 bg-white'
               )}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-zinc-900">{room.name}</h3>
+                    <h3 className="font-semibold text-forest-700">{room.name}</h3>
                     {isSelected && (
-                      <div className="w-5 h-5 rounded-full bg-[#2D5016] flex items-center justify-center">
+                      <div className="w-5 h-5 rounded-full bg-forest-500 flex items-center justify-center">
                         <Check className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -90,7 +90,7 @@ export function StepRoom({ state, updateState }: StepRoomProps) {
                   </div>
 
                   {room.view_description && (
-                    <p className="text-sm text-stone-500 mt-1 flex items-center gap-1">
+                    <p className="text-sm text-forest-500/45 mt-1 flex items-center gap-1">
                       <MapPin className="w-3.5 h-3.5" />
                       {room.view_description}
                     </p>
@@ -99,7 +99,7 @@ export function StepRoom({ state, updateState }: StepRoomProps) {
                   {features.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {features.map((f) => (
-                        <span key={f} className="px-2 py-0.5 bg-[#F5F0E8] text-[#2D5016] text-xs rounded-full">
+                        <span key={f} className="px-2 py-0.5 bg-cream-100 text-forest-500 text-xs rounded-full">
                           {f}
                         </span>
                       ))}
@@ -113,7 +113,7 @@ export function StepRoom({ state, updateState }: StepRoomProps) {
       </div>
 
       {rooms.length === 0 && (
-        <p className="text-center text-stone-500 py-8">
+        <p className="text-center text-forest-500/45 py-8">
           No rooms available for the selected dates.
         </p>
       )}
