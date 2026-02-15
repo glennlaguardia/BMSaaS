@@ -147,6 +147,11 @@
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior-y: contain;
 }
 
 /* Focus visible for accessibility */
