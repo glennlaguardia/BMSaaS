@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
 
     await Promise.all(updates);
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('[admin/sections/reorder] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

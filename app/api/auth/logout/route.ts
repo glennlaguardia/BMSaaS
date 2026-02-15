@@ -5,7 +5,8 @@ export async function POST() {
   try {
     await clearSessionCookie();
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('[auth/logout] error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

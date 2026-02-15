@@ -36,7 +36,7 @@ export function Pricing({ content, types }: PricingProps) {
             return (
               <div
                 key={type.id}
-                className="group rounded-2xl border border-forest-100/40 p-6 hover:border-forest-500/20 hover:shadow-lg transition-all duration-500 flex flex-col bg-white"
+                className="group rounded-2xl border border-forest-100/40 p-6 hover:border-forest-500/20 flex flex-col bg-white card-lift"
               >
                 <h3 className="font-display font-semibold text-forest-500 text-lg">{type.name}</h3>
                 <div className="mt-4">
@@ -81,10 +81,10 @@ export function Pricing({ content, types }: PricingProps) {
                 <Button
                   asChild
                   variant="outline"
-                  className="w-full mt-6 rounded-full font-semibold group/btn"
+                  className="w-full mt-6 rounded-full font-semibold group/btn hover:bg-forest-500 hover:text-white hover:border-forest-500 transition-all duration-300"
                 >
                   <Link href="/book" className="flex items-center justify-center gap-2">
-                    Book Now
+                    Reserve
                     <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
                   </Link>
                 </Button>

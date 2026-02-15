@@ -45,27 +45,40 @@ const STEPS = [
   { id: 7, label: 'Review' },
 ];
 
+interface PrefillData {
+  checkIn?: string;
+  checkOut?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  numAdults?: number;
+  numChildren?: number;
+}
+
 interface BookingWizardProps {
   tenant: Tenant;
   accommodationTypes: AccommodationType[];
   addons: Addon[];
+  prefill?: PrefillData;
 }
 
-export function BookingWizard({ tenant, accommodationTypes, addons }: BookingWizardProps) {
-  const [step, setStep] = useState(1);
+export function BookingWizard({ tenant, accommodationTypes, addons, prefill }: BookingWizardProps) {
+  const hasPrefill = prefill && (prefill.checkIn || prefill.firstName);
+  const [step, setStep] = useState(hasPrefill && prefill?.checkIn ? 2 : 1);
   const [submitting, setSubmitting] = useState(false);
   const [state, setState] = useState<BookingState>({
-    checkIn: '',
-    checkOut: '',
+    checkIn: prefill?.checkIn || '',
+    checkOut: prefill?.checkOut || '',
     accommodationType: null,
     room: null,
-    numAdults: 2,
-    numChildren: 0,
+    numAdults: prefill?.numAdults || 2,
+    numChildren: prefill?.numChildren || 0,
     selectedAddons: [],
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
+    firstName: prefill?.firstName || '',
+    lastName: prefill?.lastName || '',
+    email: prefill?.email || '',
+    phone: prefill?.phone || '',
     specialRequests: '',
     pricing: null,
     bookingId: null,

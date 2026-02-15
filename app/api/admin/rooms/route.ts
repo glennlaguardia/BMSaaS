@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
     if (error) throw error;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/rooms] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/rooms] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

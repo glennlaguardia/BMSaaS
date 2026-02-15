@@ -9,12 +9,14 @@ interface HeroProps {
     cta_text?: string;
     cta_link?: string;
     hero_image?: string;
+    background_image?: string;
   };
   tenantName: string;
 }
 
 export function Hero({ content, tenantName }: HeroProps) {
-  const hasImage = !!content.hero_image;
+  const heroImage = content.hero_image || content.background_image;
+  const hasImage = !!heroImage;
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -22,7 +24,7 @@ export function Hero({ content, tenantName }: HeroProps) {
       {hasImage ? (
         <>
           <img
-            src={content.hero_image}
+            src={heroImage}
             alt={tenantName}
             className="absolute inset-0 w-full h-full object-cover scale-105"
           />

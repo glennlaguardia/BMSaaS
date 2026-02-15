@@ -31,7 +31,7 @@ export function LandingPage({ tenant, sections, types, testimonials }: LandingPa
 
   return (
     <div className="min-h-screen">
-      <Navbar tenantName={tenant.name} phone={tenant.contact_phone} />
+      <Navbar tenantName={tenant.name} />
 
       {orderedTypes.map((type) => {
         const content = (sectionMap.get(type) || {}) as any;

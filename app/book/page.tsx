@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BookingWizard } from '@/components/booking/BookingWizard';
 import { DayTourWizard } from '@/components/booking/DayTourWizard';
 import { cn } from '@/lib/utils';
@@ -8,6 +9,22 @@ import { Bed, Sun } from 'lucide-react';
 import type { Tenant, AccommodationType, Addon } from '@/types';
 
 export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-cream-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-forest-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-forest-500/45 mt-3">Loading booking...</p>
+        </div>
+      </div>
+    }>
+      <BookingPageContent />
+    </Suspense>
+  );
+}
+
+function BookingPageContent() {
+  const searchParams = useSearchParams();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [types, setTypes] = useState<AccommodationType[]>([]);
   const [overnightAddons, setOvernightAddons] = useState<Addon[]>([]);
@@ -88,6 +105,16 @@ export default function BookingPage() {
           tenant={tenant}
           accommodationTypes={types}
           addons={overnightAddons}
+          prefill={{
+            checkIn: searchParams.get('checkIn') || '',
+            checkOut: searchParams.get('checkOut') || '',
+            firstName: searchParams.get('firstName') || '',
+            lastName: searchParams.get('lastName') || '',
+            email: searchParams.get('email') || '',
+            phone: searchParams.get('phone') || '',
+            numAdults: parseInt(searchParams.get('numAdults') || '0') || 0,
+            numChildren: parseInt(searchParams.get('numChildren') || '0') || 0,
+          }}
         />
       ) : (
         <DayTourWizard

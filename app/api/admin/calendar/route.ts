@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
     const m = month ? parseInt(month) : now.getMonth() + 1;
     const y = year ? parseInt(year) : now.getFullYear();
 
+    // Validate month/year are reasonable numbers
+    if (isNaN(m) || isNaN(y) || m < 1 || m > 12 || y < 2020 || y > 2100) {
+      return NextResponse.json({ success: false, error: 'Invalid month or year' }, { status: 400 });
+    }
+
     // Start of month and end of month
     const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
     const endDate = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
@@ -46,7 +51,8 @@ export async function GET(request: NextRequest) {
         year: y,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('[admin/calendar] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

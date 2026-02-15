@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
         reference_number: bookingResult.reference_number,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('[admin/bookings] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -117,7 +118,8 @@ export async function GET(request: NextRequest) {
       data,
       pagination: { page, limit, total: count || 0 },
     });
-  } catch {
+  } catch (error) {
+    console.error('[admin/bookings] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

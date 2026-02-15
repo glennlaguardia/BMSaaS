@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy, Home } from 'lucide-react';
+import { CheckCircle, Copy, Home, BedDouble } from 'lucide-react';
 import { useState } from 'react';
 import type { BookingState } from './BookingWizard';
 import type { Tenant } from '@/types';
@@ -25,6 +25,18 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
 
   const rules = tenant.booking_rules as unknown as Record<string, unknown> | null;
   const paymentDetails = (rules?.payment_details || {}) as Record<string, string>;
+
+  // Build a URL to pre-fill dates and guest info for booking another room
+  const bookAnotherParams = new URLSearchParams();
+  if (state.checkIn) bookAnotherParams.set('checkIn', state.checkIn);
+  if (state.checkOut) bookAnotherParams.set('checkOut', state.checkOut);
+  if (state.firstName) bookAnotherParams.set('firstName', state.firstName);
+  if (state.lastName) bookAnotherParams.set('lastName', state.lastName);
+  if (state.email) bookAnotherParams.set('email', state.email);
+  if (state.phone) bookAnotherParams.set('phone', state.phone);
+  bookAnotherParams.set('numAdults', String(state.numAdults));
+  bookAnotherParams.set('numChildren', String(state.numChildren));
+  const bookAnotherRoomUrl = `/book?${bookAnotherParams.toString()}`;
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 md:py-20 text-center">
@@ -77,9 +89,23 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
         </div>
       </div>
 
+      {/* Multi-Room Note */}
+      <div className="mt-6 p-4 bg-forest-50 rounded-2xl border border-forest-200">
+        <p className="text-sm text-forest-700">
+          <strong>Need multiple rooms?</strong> You can book additional rooms for the same dates. 
+          Your guest info will be pre-filled for convenience.
+        </p>
+      </div>
+
       {/* Actions */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
         <Button asChild className="bg-forest-500 hover:bg-forest-600 text-white rounded-full px-8">
+          <Link href={bookAnotherRoomUrl}>
+            <BedDouble className="w-4 h-4 mr-2" />
+            Book Another Room
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="rounded-full px-8">
           <Link href="/">
             <Home className="w-4 h-4 mr-2" />
             Back to Home
@@ -88,7 +114,7 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
       </div>
 
       <p className="text-xs text-forest-500/35 mt-6">
-        A confirmation details will be sent to <strong>{state.email}</strong> once payment is verified.
+        Confirmation details will be sent to <strong>{state.email}</strong> once payment is verified.
       </p>
     </div>
   );

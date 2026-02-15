@@ -10,12 +10,27 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate, formatDateTime, statusLabel, statusColor } from '@/lib/utils';
 import { formatPHP } from '@/lib/pricing';
+import type { Booking, BookingAddon } from '@/types';
+
+interface BookingDetail extends Booking {
+  rooms?: { name: string } | null;
+  accommodation_types?: { name: string } | null;
+  booking_addons?: (BookingAddon & { addons?: { name: string } })[];
+  booking_status_log?: {
+    id: string;
+    field_changed: string;
+    old_value: string | null;
+    new_value: string;
+    change_source: string;
+    notes: string | null;
+    created_at: string;
+  }[];
+}
 
 export default function BookingDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const router = useRouter();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 

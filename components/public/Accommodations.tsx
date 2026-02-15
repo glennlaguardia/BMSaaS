@@ -34,22 +34,32 @@ export function Accommodations({ content, types }: AccommodationsProps) {
             return (
               <div
                 key={type.id}
-                className="group rounded-2xl overflow-hidden bg-white border border-forest-100/40 shadow-sm hover:shadow-lg hover:border-forest-100/60 transition-all duration-500"
+                className="group flex flex-col rounded-2xl overflow-hidden bg-white border border-forest-100/40 shadow-sm hover:border-forest-100/60 card-lift"
               >
-                {/* Image placeholder */}
-                <div className="h-60 bg-gradient-to-br from-forest-500/10 via-forest-500/5 to-amber-300/10 flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,_var(--tw-gradient-stops))] from-amber-300/5 to-transparent" />
-                  <div className="text-center relative z-10">
-                    <div className="w-16 h-16 rounded-full bg-forest-500/10 flex items-center justify-center mx-auto mb-3">
-                      <span className="font-display text-2xl text-forest-500/40">
-                        {type.name.charAt(0)}
-                      </span>
+                {/* Image */}
+                <div className="h-60 bg-gradient-to-br from-forest-500/10 via-forest-500/5 to-amber-300/10 relative overflow-hidden">
+                  {type.thumbnail_url ? (
+                    <img
+                      src={type.thumbnail_url}
+                      alt={type.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,_var(--tw-gradient-stops))] from-amber-300/5 to-transparent" />
+                      <div className="text-center relative z-10">
+                        <div className="w-16 h-16 rounded-full bg-forest-500/10 flex items-center justify-center mx-auto mb-3">
+                          <span className="font-display text-2xl text-forest-500/40">
+                            {type.name.charAt(0)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-forest-500/30 font-medium tracking-wider uppercase">Photos coming soon</p>
+                      </div>
                     </div>
-                    <p className="text-xs text-forest-500/30 font-medium tracking-wider uppercase">Photos coming soon</p>
-                  </div>
+                  )}
                 </div>
 
-                <div className="p-6 lg:p-7">
+                <div className="p-6 lg:p-7 flex flex-col flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-display text-xl font-semibold text-forest-500">
                       {type.name}
@@ -77,17 +87,17 @@ export function Accommodations({ content, types }: AccommodationsProps) {
                   </div>
 
                   {/* Amenity tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-5">
+                  <div className="flex flex-wrap gap-1.5 mt-5 flex-1">
                     {amenities.slice(0, 5).map((amenity) => (
                       <span
                         key={amenity}
-                        className="px-2.5 py-1 bg-cream-100 text-forest-500/60 text-xs rounded-full font-medium"
+                        className="px-2.5 py-1 bg-cream-100 text-forest-500/60 text-xs rounded-full font-medium h-fit"
                       >
                         {amenity}
                       </span>
                     ))}
                     {amenities.length > 5 && (
-                      <span className="px-2.5 py-1 bg-forest-50 text-forest-500/40 text-xs rounded-full">
+                      <span className="px-2.5 py-1 bg-forest-50 text-forest-500/40 text-xs rounded-full h-fit">
                         +{amenities.length - 5} more
                       </span>
                     )}

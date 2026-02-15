@@ -16,7 +16,8 @@ export async function GET() {
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/branding] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -49,7 +50,8 @@ export async function PATCH(request: NextRequest) {
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/branding] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

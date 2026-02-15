@@ -25,7 +25,8 @@ export async function GET() {
     }
 
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[public/rate-adjustments] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

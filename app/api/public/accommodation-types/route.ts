@@ -20,7 +20,8 @@ export async function GET() {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[public/accommodation-types] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

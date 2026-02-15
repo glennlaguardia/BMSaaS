@@ -27,7 +27,8 @@ export async function PATCH(
 
     if (error) throw error;
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/addons/[id]] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -50,7 +51,8 @@ export async function DELETE(
 
     if (error) throw error;
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('[admin/addons/[id]] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

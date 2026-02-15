@@ -78,7 +78,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: false, error: 'Unknown export type' }, { status: 400 });
-  } catch {
+  } catch (error) {
+    console.error('[admin/reports/export] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

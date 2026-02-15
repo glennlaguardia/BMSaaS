@@ -17,7 +17,8 @@ export async function POST(request: Request) {
     console.log('[Inquiry]', parsed.data);
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('[public/inquiry] error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

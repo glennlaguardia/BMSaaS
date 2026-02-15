@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[public/addons] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -3,12 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NavbarProps {
   tenantName: string;
-  phone?: string | null;
 }
 
 const navLinks = [
@@ -21,7 +20,7 @@ const navLinks = [
   { href: '#contact', label: 'Contact' },
 ];
 
-export function Navbar({ tenantName, phone }: NavbarProps) {
+export function Navbar({ tenantName }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -70,29 +69,6 @@ export function Navbar({ tenantName, phone }: NavbarProps) {
                 {link.label}
               </a>
             ))}
-          </div>
-
-          {/* CTA + Phone */}
-          <div className="hidden lg:flex items-center gap-4">
-            {phone && (
-              <a
-                href={`tel:${phone}`}
-                className={cn(
-                  'flex items-center gap-1.5 text-sm font-body font-medium transition-colors duration-200',
-                  isScrolled ? 'text-forest-500/60 hover:text-forest-500' : 'text-white/70 hover:text-white'
-                )}
-              >
-                <Phone className="w-3.5 h-3.5" />
-                {phone}
-              </a>
-            )}
-            <Button
-              asChild
-              variant="terracotta"
-              className="rounded-full px-6 transition-all duration-300"
-            >
-              <Link href="/book">Book Now</Link>
-            </Button>
           </div>
 
           {/* Mobile toggle */}

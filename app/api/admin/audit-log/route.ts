@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
       data,
       pagination: { page, limit, total: count || 0 },
     });
-  } catch {
+  } catch (error) {
+    console.error('[admin/audit-log] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

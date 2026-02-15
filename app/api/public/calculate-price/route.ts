@@ -22,11 +22,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Fetch accommodation type
+    // Fetch accommodation type (scoped to tenant for security)
     const { data: typeData } = await supabase
       .from('accommodation_types')
       .select('*')
       .eq('id', accommodation_type_id)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (!typeData) {
@@ -48,7 +49,8 @@ export async function POST(request: NextRequest) {
       const { data: addonsData } = await supabase
         .from('addons')
         .select('*')
-        .in('id', addon_ids);
+        .in('id', addon_ids)
+        .eq('tenant_id', tenantId);
 
       if (addonsData) {
         selectedAddons = addonsData.map((addon, i) => ({
@@ -69,7 +71,8 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({ success: true, data: priceCalc });
-  } catch {
+  } catch (error) {
+    console.error('[calculate-price] POST error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -72,7 +72,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: availabilityMap });
-  } catch {
+  } catch (error) {
+    console.error('[public/availability] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

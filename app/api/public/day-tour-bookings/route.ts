@@ -22,7 +22,13 @@ export async function POST(request: NextRequest) {
     const data = parsed.data;
     const supabase = createAdminClient();
 
-    // Insert the day tour booking directly
+    // Calculate amounts server-side for security
+    // TODO: fetch day tour pricing from DB when pricing table is ready
+    const baseAmount = data.base_amount ?? 0;
+    const addonsAmount = data.addons_amount ?? 0;
+    const totalAmount = baseAmount + addonsAmount;
+
+    // Insert the day tour booking (total_pax is a GENERATED column — do not include it)
     const { data: booking, error } = await supabase
       .from('day_tour_bookings')
       .insert({
@@ -30,15 +36,14 @@ export async function POST(request: NextRequest) {
         tour_date: data.tour_date,
         num_adults: data.num_adults,
         num_children: data.num_children,
-        total_pax: data.num_adults + data.num_children,
         guest_first_name: data.guest_first_name,
         guest_last_name: data.guest_last_name,
         guest_email: data.guest_email,
         guest_phone: data.guest_phone,
         special_requests: data.special_requests || null,
-        base_amount: body.base_amount || 0,
-        addons_amount: body.addons_amount || 0,
-        total_amount: body.total_amount || 0,
+        base_amount: baseAmount,
+        addons_amount: addonsAmount,
+        total_amount: totalAmount,
         status: 'pending',
         payment_status: 'unpaid',
         source: 'online',
@@ -54,7 +59,8 @@ export async function POST(request: NextRequest) {
       success: true,
       data: { booking_id: booking.id, reference_number: booking.reference_number },
     });
-  } catch {
+  } catch (error) {
+    console.error('[day-tour-bookings] POST error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

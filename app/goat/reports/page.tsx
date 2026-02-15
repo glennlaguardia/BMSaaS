@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* Recharts callbacks use generic types */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -173,8 +173,10 @@ export default function ReportsPage() {
                 />
                 <YAxis tick={{ fontSize: 11, fill: '#71717a' }} />
                 <Tooltip
-                  formatter={(value: any) => formatPHP(value)}
-                  labelFormatter={(label: any) => new Date(label).toLocaleDateString()}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  formatter={(value: any) => formatPHP(Number(value) || 0)}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  labelFormatter={(label: any) => new Date(String(label)).toLocaleDateString()}
                 />
                 <Area
                   type="monotone"
@@ -204,7 +206,8 @@ export default function ReportsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#71717a' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#71717a' }} />
-                  <Tooltip formatter={(value: any) => formatPHP(value)} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Tooltip formatter={(value: any) => formatPHP(Number(value) || 0)} />
                   <Bar dataKey="value" name="Revenue">
                     {charts.revenueByType.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -235,6 +238,7 @@ export default function ReportsPage() {
                     paddingAngle={3}
                     dataKey="value"
                     nameKey="name"
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     label={({ name, percent }: any) => `${statusLabel(name || '')} ${((percent || 0) * 100).toFixed(0)}%`}
                   >
                     {charts.statusDistribution.map((_, i) => (
@@ -242,7 +246,8 @@ export default function ReportsPage() {
                     ))}
                   </Pie>
                   <Tooltip />
-                  <Legend formatter={(value: any) => statusLabel(value)} />
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  <Legend formatter={(value: any) => statusLabel(String(value))} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

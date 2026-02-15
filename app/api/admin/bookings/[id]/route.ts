@@ -26,7 +26,8 @@ export async function GET(
     if (error) throw error;
 
     return NextResponse.json({ success: true, data });
-  } catch {
+  } catch (error) {
+    console.error('[admin/bookings/[id]] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -128,7 +129,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error('[admin/bookings/[id]] error:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

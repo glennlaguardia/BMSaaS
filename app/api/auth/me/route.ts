@@ -16,7 +16,8 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash, ...safeAdmin } = admin;
     return NextResponse.json({ success: true, data: safeAdmin });
-  } catch {
+  } catch (error) {
+    console.error('[auth/me] error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

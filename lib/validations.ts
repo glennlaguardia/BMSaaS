@@ -40,6 +40,9 @@ export const createDayTourBookingSchema = z.object({
   addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
   payment_method: z.enum(['online', 'manual']).optional(),
+  base_amount: z.number().min(0).optional().default(0),
+  addons_amount: z.number().min(0).optional().default(0),
+  total_amount: z.number().min(0).optional().default(0),
 });
 
 // ---- Price Calculation ----

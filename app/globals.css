@@ -160,3 +160,25 @@ html {
   background: hsl(100 53% 20% / 0.15);
   color: hsl(100 53% 20%);
 }
+
+/* Subtle leaf/organic divider between sections */
+.section-divider {
+  position: relative;
+}
+.section-divider::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--amber) / 0.4), transparent);
+  margin: 0 auto;
+}
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.1);
+}

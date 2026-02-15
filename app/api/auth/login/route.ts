@@ -34,7 +34,8 @@ export async function POST(request: Request) {
         role: session.role,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('[auth/login] error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
