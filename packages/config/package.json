@@ -1,0 +1,10 @@
+{
+    "name": "@budabook/config",
+    "version": "0.1.0",
+    "private": true,
+    "main": "./eslint.config.js",
+    "scripts": {
+        "build": "echo 'no build needed'",
+        "lint": "echo 'no lint configured'"
+    }
+}
