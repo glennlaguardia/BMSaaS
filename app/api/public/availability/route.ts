@@ -2,18 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { addDays, format, parseISO } from 'date-fns';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
+import { publicDateRangeSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 120 requests per minute per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/availability', { windowMs: 60_000, max: 120 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const tenantId = await getTenantId();
     if (!tenantId) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('start_date');
-    const endDate = searchParams.get('end_date');
-    const typeId = searchParams.get('type_id');
+    const dateParams = publicDateRangeSchema.safeParse({
+      start_date: searchParams.get('start_date') ?? undefined,
+      end_date: searchParams.get('end_date') ?? undefined,
+      type_id: searchParams.get('type_id') ?? undefined,
+    });
+    if (!dateParams.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters' }, { status: 400 });
+    }
+    const startDate = dateParams.data.start_date ?? null;
+    const endDate = dateParams.data.end_date ?? null;
+    const typeId = dateParams.data.type_id ?? null;
 
     if (!startDate || !endDate) {
       return NextResponse.json({ success: false, error: 'start_date and end_date required' }, { status: 400 });

@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { reportParamsSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    const period = request.nextUrl.searchParams.get('period') || '30';
-    const days = parseInt(period, 10) || 30;
+    const parsed = reportParamsSchema.safeParse({
+      period: request.nextUrl.searchParams.get('period') ?? undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters' }, { status: 400 });
+    }
+    const days = parsed.data.period;
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     const startISO = startDate.toISOString().split('T')[0];

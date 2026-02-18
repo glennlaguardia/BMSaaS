@@ -12,7 +12,6 @@ import {
   Bed,
   Package,
   Percent,
-  Palette,
   BarChart3,
   ClipboardList,
   Settings,
@@ -53,12 +52,7 @@ const navSections = [
       { href: '/goat/rates', label: 'Rate Adjustments', icon: Percent },
     ],
   },
-  {
-    label: 'Website',
-    items: [
-      { href: '/goat/site-builder', label: 'Site Builder', icon: Palette },
-    ],
-  },
+
   {
     label: 'Reports',
     items: [

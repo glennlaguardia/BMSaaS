@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { inquirySchema } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 inquiry submissions per 15 minutes per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/inquiry', { windowMs: 900_000, max: 5 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const body = await request.json();
     const parsed = inquirySchema.safeParse(body);
 

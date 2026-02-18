@@ -77,7 +77,7 @@ export function Footer({ tenantName, phone, email, facebookUrl }: FooterProps) {
             &copy; {new Date().getFullYear()} {tenantName}. All rights reserved.
           </p>
           <p className="text-xs text-white/20 font-medium">
-            Powered by BudaBook
+            Powered by Nexus Solutions
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { brandingSchema } from '@/lib/validations';
 
 export async function GET() {
   try {
@@ -10,7 +11,7 @@ export async function GET() {
     const supabase = createAdminClient();
     const { data, error } = await supabase
       .from('tenants')
-      .select('name, slug, logo_url, primary_color, secondary_color, accent_color, font_heading, font_body, tagline, meta_description, social_links, booking_rules')
+      .select('name, slug, logo_url, primary_color, secondary_color, accent_color, font_heading, font_body, font_heading_size, font_body_size, font_heading_color, font_body_color, tagline, meta_description, social_links, booking_rules')
       .eq('id', session.tenant_id)
       .single();
 
@@ -28,14 +29,14 @@ export async function PATCH(request: NextRequest) {
     if (!session) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const allowedFields = [
-      'name', 'logo_url', 'primary_color', 'secondary_color', 'accent_color',
-      'font_heading', 'font_body', 'tagline', 'meta_description', 'social_links', 'booking_rules',
-    ];
-    const updates: Record<string, unknown> = {};
-    for (const key of allowedFields) {
-      if (key in body) updates[key] = body[key];
+    const parsed = brandingSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid input', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const updates = parsed.data;
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ success: false, error: 'No valid fields to update' }, { status: 400 });
     }

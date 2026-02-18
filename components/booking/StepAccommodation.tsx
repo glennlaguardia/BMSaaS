@@ -15,20 +15,33 @@ interface StepAccommodationProps {
 export function StepAccommodation({ state, updateState, types }: StepAccommodationProps) {
   return (
     <div>
-      <h2 className="text-xl font-bold text-forest-500 mb-1">Choose Your Accommodation</h2>
+      <h2 className="text-xl font-bold text-forest-500 mb-1">Choose Your Accommodation(s)</h2>
       <p className="text-sm text-forest-500/45 mb-6">
-        Select the type of accommodation for your stay.
+        Select one or more accommodation types for your stay.
       </p>
 
       <div className="grid gap-4">
         {types.map((type) => {
-          const isSelected = state.accommodationType?.id === type.id;
+          const isSelected = state.selectedTypes?.some(t => t.id === type.id) || state.accommodationType?.id === type.id;
           const amenities = (type.amenities as string[]) || [];
 
           return (
             <button
               key={type.id}
-              onClick={() => updateState({ accommodationType: type, room: null })}
+              onClick={() => {
+                const current = state.selectedTypes || [];
+                const exists = current.some(t => t.id === type.id);
+                const nextTypes = exists ? current.filter(t => t.id !== type.id) : [...current, type];
+                const nextPrimary = nextTypes[0] || null;
+
+                updateState({
+                  selectedTypes: nextTypes,
+                  accommodationType: nextPrimary,
+                  // Clear any previously selected rooms when types change
+                  selectedRooms: [],
+                  room: null,
+                });
+              }}
               className={cn(
                 'text-left p-5 rounded-xl border-2 transition-all',
                 isSelected

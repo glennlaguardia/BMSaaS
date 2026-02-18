@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Phone, Mail, Facebook, Send, Loader2 } from 'lucide-react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 interface ContactProps {
@@ -23,6 +25,8 @@ interface ContactProps {
 export function Contact({ content, phone, phone2, email, facebookUrl }: ContactProps) {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [sending, setSending] = useState(false);
+  const headerReveal = useScrollReveal<HTMLDivElement>();
+  const contentReveal = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,27 +53,36 @@ export function Contact({ content, phone, phone2, email, facebookUrl }: ContactP
   };
 
   return (
-    <section id="contact" className="relative py-24 md:py-32 bg-forest-500 overflow-hidden">
+    <section id="contact" className="relative py-24 md:py-32 bg-primary overflow-hidden">
       {/* Atmospheric overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-forest-400/30 via-transparent to-transparent" />
       <div className="absolute inset-0 grain pointer-events-none opacity-30" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-amber-300 font-body font-semibold tracking-[0.2em] uppercase text-xs mb-4">
+        <div
+          ref={headerReveal.ref}
+          className={cn('text-center max-w-2xl mx-auto mb-16 reveal', headerReveal.isVisible && 'visible')}
+        >
+          <p className="text-accent font-body font-semibold tracking-[0.2em] uppercase text-xs mb-4">
             Contact
           </p>
           <h2 className="font-display text-4xl md:text-5xl font-semibold text-white leading-[1.15] tracking-tight">
             {content.heading || 'Get in Touch'}
           </h2>
           <p className="text-white/45 mt-4 text-[15px]">
-            {content.subtitle || ''}
+            {content.subtitle || 'For inquiries and reservations'}
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+        <div
+          ref={contentReveal.ref}
+          className={cn(
+            'grid lg:grid-cols-2 gap-12 lg:gap-16 reveal',
+            contentReveal.isVisible && 'visible'
+          )}
+        >
           {/* Contact Info */}
-          <div className="space-y-5 stagger-children">
+          <div className="space-y-5">
             {phone && (
               <a
                 href={`tel:${phone}`}
@@ -180,7 +193,7 @@ export function Contact({ content, phone, phone2, email, facebookUrl }: ContactP
                 type="submit"
                 disabled={sending}
                 variant="amber"
-                className="w-full rounded-full"
+                className="w-full rounded-full transition-all duration-300"
               >
                 {sending ? (
                   <>

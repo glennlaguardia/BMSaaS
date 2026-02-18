@@ -165,7 +165,7 @@ export default function CalendarPage() {
                         {events.bookings.slice(0, 2).map(b => (
                           <div key={b.id} className="text-[10px] px-1 py-0.5 rounded bg-forest-50 text-forest-700 truncate">
                             <Bed className="w-2.5 h-2.5 inline mr-0.5" />
-                            {b.guest_last_name}
+                            {b.rooms?.name ? `${b.rooms.name}-${b.guest_last_name}` : b.guest_last_name}
                           </div>
                         ))}
                         {events.bookings.length > 2 && (
@@ -211,7 +211,7 @@ export default function CalendarPage() {
                         {b.guest_first_name} {b.guest_last_name}
                       </p>
                       <p className="text-xs text-forest-500/45">
-                        {b.rooms?.name || 'Room TBD'} · {b.accommodation_types?.name || ''}
+                        {b.rooms?.name ? `${b.rooms.name} · ` : ''}{b.accommodation_types?.name || ''}
                       </p>
                       <p className="text-xs text-forest-500/35 font-mono">{b.reference_number}</p>
                     </div>

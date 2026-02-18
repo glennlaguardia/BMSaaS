@@ -15,9 +15,13 @@ interface StepConfirmationProps {
 export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
   const [copied, setCopied] = useState(false);
 
+  const hasGroup = !!state.groupReferenceNumber;
+  const hasMultiple = state.multiBookings && state.multiBookings.length > 1;
+  const primaryReference = state.groupReferenceNumber || state.referenceNumber || state.multiBookings?.[0]?.referenceNumber || '';
+
   const copyRef = () => {
-    if (state.referenceNumber) {
-      navigator.clipboard.writeText(state.referenceNumber);
+    if (primaryReference) {
+      navigator.clipboard.writeText(primaryReference);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -45,18 +49,20 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
       </div>
 
       <h1 className="text-2xl md:text-3xl font-bold text-forest-500">
-        Booking Submitted!
+        {hasGroup ? 'Booking Group Submitted!' : hasMultiple ? 'Bookings Submitted!' : 'Booking Submitted!'}
       </h1>
       <p className="text-forest-500/45 mt-2">
         Your booking has been received. Please complete payment within 48 hours.
       </p>
 
-      {/* Reference Number */}
+      {/* Reference Number(s) */}
       <div className="mt-8 p-6 bg-white rounded-2xl border border-stone-200 shadow-sm">
-        <p className="text-sm text-forest-500/45 mb-2">Your Reference Number</p>
+        <p className="text-sm text-forest-500/45 mb-2">
+          {hasGroup ? 'Your Group Reference Number' : hasMultiple ? 'Your Reference Numbers' : 'Your Reference Number'}
+        </p>
         <div className="flex items-center justify-center gap-3">
           <span className="text-2xl md:text-3xl font-bold tracking-wider text-forest-500">
-            {state.referenceNumber}
+            {primaryReference}
           </span>
           <button
             onClick={copyRef}
@@ -66,6 +72,16 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
             <Copy className="w-4 h-4 text-forest-500/35" />
           </button>
         </div>
+        {hasMultiple && state.multiBookings && (
+          <div className="mt-4 text-left space-y-1 text-sm text-forest-700">
+            {state.multiBookings.map((b, idx) => (
+              <p key={`${b.referenceNumber}-${idx}`}>
+                <span className="font-medium">{b.roomName || 'Room'}:</span>{' '}
+                <span className="font-mono">{b.referenceNumber}</span>
+              </p>
+            ))}
+          </div>
+        )}
         {copied && <p className="text-xs text-forest-500 mt-1">Copied!</p>}
       </div>
 
@@ -90,21 +106,25 @@ export function StepConfirmation({ state, tenant }: StepConfirmationProps) {
       </div>
 
       {/* Multi-Room Note */}
-      <div className="mt-6 p-4 bg-forest-50 rounded-2xl border border-forest-200">
-        <p className="text-sm text-forest-700">
-          <strong>Need multiple rooms?</strong> You can book additional rooms for the same dates. 
-          Your guest info will be pre-filled for convenience.
-        </p>
-      </div>
+      {!hasMultiple && (
+        <div className="mt-6 p-4 bg-forest-50 rounded-2xl border border-forest-200">
+          <p className="text-sm text-forest-700">
+            <strong>Need multiple rooms?</strong> You can book additional rooms for the same dates. 
+            Your guest info will be pre-filled for convenience.
+          </p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <Button asChild className="bg-forest-500 hover:bg-forest-600 text-white rounded-full px-8">
-          <Link href={bookAnotherRoomUrl}>
-            <BedDouble className="w-4 h-4 mr-2" />
-            Book Another Room
-          </Link>
-        </Button>
+        {!hasMultiple && (
+          <Button asChild className="bg-forest-500 hover:bg-forest-600 text-white rounded-full px-8">
+            <Link href={bookAnotherRoomUrl}>
+              <BedDouble className="w-4 h-4 mr-2" />
+              Book Another Room
+            </Link>
+          </Button>
+        )}
         <Button asChild variant="outline" className="rounded-full px-8">
           <Link href="/">
             <Home className="w-4 h-4 mr-2" />

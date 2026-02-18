@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { auditLogFilterSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,13 +11,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const start_date = searchParams.get('start_date');
-    const end_date = searchParams.get('end_date');
-    const booking_type = searchParams.get('booking_type');
-    const field_changed = searchParams.get('field_changed');
-    const change_source = searchParams.get('change_source');
+    const parsed = auditLogFilterSchema.safeParse({
+      page: searchParams.get('page') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      start_date: searchParams.get('start_date') ?? undefined,
+      end_date: searchParams.get('end_date') ?? undefined,
+      booking_type: searchParams.get('booking_type') ?? undefined,
+      field_changed: searchParams.get('field_changed') ?? undefined,
+      change_source: searchParams.get('change_source') ?? undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const filters = parsed.data;
+    const { page, limit, start_date, end_date, booking_type, field_changed, change_source } = filters;
 
     const supabase = createAdminClient();
     let query = supabase

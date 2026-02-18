@@ -1,16 +1,77 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createBookingSchema } from '@/lib/validations';
+import { createBookingSchema, createBookingGroupSchema } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 10 booking requests per hour per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/bookings', { windowMs: 3_600_000, max: 10 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const tenantId = await getTenantId();
     if (!tenantId) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const body = await request.json();
+    const supabase = createAdminClient();
+
+    if (body.group_booking === true) {
+      const groupParsed = createBookingGroupSchema.safeParse(body);
+      if (!groupParsed.success) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid group booking data', details: groupParsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      const data = groupParsed.data;
+      const roomsPayload = data.rooms.map(r => ({
+        room_id: r.room_id,
+        accommodation_type_id: r.accommodation_type_id,
+        base_amount: r.base_amount,
+        pax_surcharge: r.pax_surcharge,
+        addons_amount: r.addons_amount,
+        total_amount: r.total_amount,
+        addon_ids: r.addon_ids || [],
+        addon_quantities: r.addon_quantities || r.addon_ids?.map(() => 1) || [],
+        addon_prices: r.addon_prices || [],
+      }));
+      const result = await supabase.rpc('create_booking_group_with_bookings', {
+        p_tenant_id: tenantId,
+        p_check_in: data.check_in_date,
+        p_check_out: data.check_out_date,
+        p_num_adults: data.num_adults,
+        p_num_children: data.num_children,
+        p_guest_first_name: data.guest_first_name,
+        p_guest_last_name: data.guest_last_name,
+        p_guest_email: data.guest_email,
+        p_guest_phone: data.guest_phone,
+        p_special_requests: data.special_requests || null,
+        p_source: data.source || 'online',
+        p_rooms: roomsPayload,
+      });
+      if (result.error) {
+        return NextResponse.json({ success: false, error: result.error.message }, { status: 400 });
+      }
+      const groupResult = result.data as { success?: boolean; error?: string; group_id?: string; group_reference_number?: string };
+      if (!groupResult?.success) {
+        return NextResponse.json(
+          { success: false, error: groupResult?.error || 'Group booking failed' },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        data: {
+          group_id: groupResult.group_id,
+          group_reference_number: groupResult.group_reference_number,
+        },
+      });
+    }
 
     const parsed = createBookingSchema.safeParse(body);
     if (!parsed.success) {
@@ -21,10 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data;
-    const supabase = createAdminClient();
 
-    // Calculate the actual price server-side (prevent tampering)
-    // For now use the client-provided amounts — in production, re-calculate server-side
     const result = await supabase.rpc('create_booking', {
       p_tenant_id: tenantId,
       p_room_id: data.room_id,
@@ -38,16 +96,16 @@ export async function POST(request: NextRequest) {
       p_guest_email: data.guest_email,
       p_guest_phone: data.guest_phone,
       p_special_requests: data.special_requests || null,
-      p_base_amount: body.base_amount || 0,
-      p_pax_surcharge: body.pax_surcharge || 0,
-      p_addons_amount: body.addons_amount || 0,
-      p_discount_amount: body.discount_amount || 0,
-      p_total_amount: body.total_amount || 0,
+      p_base_amount: data.base_amount,
+      p_pax_surcharge: data.pax_surcharge,
+      p_addons_amount: data.addons_amount,
+      p_discount_amount: data.discount_amount,
+      p_total_amount: data.total_amount,
       p_source: data.source || 'online',
       p_created_by: null,
       p_addon_ids: data.addon_ids || [],
       p_addon_quantities: data.addon_quantities || data.addon_ids?.map(() => 1) || [],
-      p_addon_prices: body.addon_prices || [],
+      p_addon_prices: data.addon_prices || [],
     });
 
     if (result.error) {

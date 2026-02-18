@@ -1,33 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
+import { publicDateRangeSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 120 requests per minute per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/rooms', { windowMs: 60_000, max: 120 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const tenantId = await getTenantId();
     if (!tenantId) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
-    const typeId = searchParams.get('type_id');
-    const checkIn = searchParams.get('check_in');
-    const checkOut = searchParams.get('check_out');
+    const roomParams = publicDateRangeSchema.safeParse({
+      type_id: searchParams.get('type_id') ?? undefined,
+      type_ids: searchParams.get('type_ids') ?? undefined,
+      check_in: searchParams.get('check_in') ?? undefined,
+      check_out: searchParams.get('check_out') ?? undefined,
+    });
+    if (!roomParams.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters' }, { status: 400 });
+    }
+    const typeId = roomParams.data.type_id ?? null;
+    const typeIdsParam = roomParams.data.type_ids ?? null;
+    const checkIn = roomParams.data.check_in ?? null;
+    const checkOut = roomParams.data.check_out ?? null;
 
-    if (!typeId) {
-      return NextResponse.json({ success: false, error: 'type_id required' }, { status: 400 });
+    if (!typeId && !typeIdsParam) {
+      return NextResponse.json({ success: false, error: 'type_id or type_ids required' }, { status: 400 });
     }
 
     const supabase = createAdminClient();
 
     // Get all active rooms for this type
-    const { data: rooms, error } = await supabase
+    let query = supabase
       .from('rooms')
       .select('*')
       .eq('tenant_id', tenantId)
-      .eq('accommodation_type_id', typeId)
       .eq('is_active', true)
       .order('sort_order', { ascending: true });
+
+    if (typeIdsParam) {
+      const typeIds = typeIdsParam.split(',').map(id => id.trim()).filter(Boolean);
+      if (typeIds.length > 0) {
+        query = query.in('accommodation_type_id', typeIds);
+      }
+    } else if (typeId) {
+      query = query.eq('accommodation_type_id', typeId);
+    }
+
+    const { data: rooms, error } = await query;
 
     if (error) throw error;
 

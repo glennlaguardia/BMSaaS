@@ -18,6 +18,10 @@ export interface Tenant {
   font_family: string;
   font_heading: string;
   font_body: string;
+  font_heading_size: string | null;
+  font_body_size: string | null;
+  font_heading_color: string | null;
+  font_body_color: string | null;
   meta_description: string | null;
   social_links: Record<string, string> | null;
   contact_phone: string | null;
@@ -137,6 +141,7 @@ export interface Booking {
   reference_number: string;
   room_id: string;
   accommodation_type_id: string;
+  booking_group_id: string | null;
   check_in_date: string;
   check_out_date: string;
   num_adults: number;
@@ -147,6 +152,8 @@ export interface Booking {
   guest_email: string;
   guest_phone: string;
   special_requests: string | null;
+  food_restrictions: string | null;
+  voucher_code: string | null;
   base_amount: number;
   pax_surcharge: number;
   addons_amount: number;
@@ -299,6 +306,14 @@ export interface Guest {
 // ---- Website Section ----
 export type SectionType = 'hero' | 'about' | 'accommodations' | 'activities' | 'gallery' | 'pricing' | 'testimonials' | 'location' | 'contact';
 
+/** Per-section style settings stored in the JSONB `settings` column. */
+export interface SectionSettings {
+  background_color?: string;
+  text_color?: string;
+  padding?: 'compact' | 'normal' | 'spacious';
+  layout_variant?: string;
+}
+
 export interface WebsiteSection {
   id: string;
   tenant_id: string;
@@ -308,6 +323,7 @@ export interface WebsiteSection {
   is_visible: boolean;
   sort_order: number;
   content: Record<string, unknown>;
+  settings: SectionSettings | null;
   created_at: string;
   updated_at: string;
 }
@@ -357,6 +373,19 @@ export interface PriceCalculation {
   addonsTotal: number;
   grandTotal: number;
 }
+
+/** Per-room breakdown for multi-room bookings (used in booking payload). */
+export interface PerRoomBreakdown {
+  roomId: string;
+  typeId: string;
+  baseAmount: number;
+  paxSurcharge: number;
+  addonsAmount: number;
+  totalAmount: number;
+}
+
+/** Pricing state in the wizard: single-room result or multi-room with perRoomBreakdown. */
+export type BookingPriceState = PriceCalculation & { perRoomBreakdown?: PerRoomBreakdown[] };
 
 // ---- Booking Wizard State ----
 export interface BookingWizardState {

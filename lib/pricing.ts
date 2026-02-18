@@ -1,5 +1,5 @@
 import { addDays, isWeekend, parseISO, format } from 'date-fns';
-import type { AccommodationType, RateAdjustment, Addon, NightBreakdown, PriceCalculation } from '@/types';
+import type { AccommodationType, RateAdjustment, Addon, NightBreakdown, PriceCalculation, PerRoomBreakdown } from '@/types';
 
 /**
  * BudaBook Pricing Engine
@@ -105,7 +105,10 @@ export function calculatePrice(
 
   // Pax surcharge
   const totalPax = numAdults + numChildren;
-  const extraPax = Math.max(0, totalPax - accommodationType.base_pax);
+  // Free child policy: 1 child (6 y/o and below) is free per room
+  const freeChildren = Math.min(numChildren, 1);
+  const billablePax = totalPax - freeChildren;
+  const extraPax = Math.max(0, billablePax - accommodationType.base_pax);
   const paxSurchargePerNight = extraPax * accommodationType.additional_pax_fee;
   const totalPaxSurcharge = paxSurchargePerNight * totalNights;
 
@@ -129,6 +132,123 @@ export function calculatePrice(
     totalPaxSurcharge,
     addonsTotal,
     grandTotal: totalBaseRate + totalPaxSurcharge + addonsTotal,
+  };
+}
+
+/**
+ * Input for multi-room pricing: one entry per room with its accommodation type
+ * and per-room guest counts.
+ */
+export interface MultiRoomPriceInput {
+  roomId: string;
+  type: AccommodationType;
+  numAdults: number;
+  numChildren: number;
+}
+
+/**
+ * Result of multi-room price calculation: aggregate totals plus per-room breakdown.
+ * Extra pax is allocated across types proportionally to (base_pax * count) so that
+ * types with larger base capacity get a fair share of the extra guests.
+ */
+export interface MultiRoomPriceResult extends PriceCalculation {
+  perRoomBreakdown: PerRoomBreakdown[];
+}
+
+/**
+ * Full price calculation for a multi-room overnight booking.
+ *
+ * Each room now has its own guest counts (`numAdults`, `numChildren` in `MultiRoomPriceInput`).
+ * Pax surcharge is calculated per room based on that room's actual occupancy vs its type's base_pax.
+ *
+ * Addons:
+ * - `globalAddons` = per_booking addons, charged once (not per room).
+ * - `perRoomAddons` = per_person addons keyed by room_id, charged based on that room's guest count.
+ */
+export function calculateMultiRoomPrice(
+  checkIn: string,
+  checkOut: string,
+  roomEntries: MultiRoomPriceInput[],
+  rateAdjustments: RateAdjustment[],
+  globalAddons: { addon: Addon; quantity: number }[] = [],
+  perRoomAddons: Record<string, { addon: Addon; quantity: number }[]> = {}
+): MultiRoomPriceResult {
+  if (roomEntries.length === 0) {
+    return {
+      nights: [],
+      totalNights: 0,
+      totalBaseRate: 0,
+      extraPax: 0,
+      paxSurchargePerNight: 0,
+      totalPaxSurcharge: 0,
+      addonsTotal: 0,
+      grandTotal: 0,
+      perRoomBreakdown: [],
+    };
+  }
+
+  let globalTotalBaseRate = 0;
+  let globalTotalPaxSurcharge = 0;
+  let globalExtraPax = 0;
+  let totalNights = 0;
+  let nights: NightBreakdown[] = [];
+
+  const perRoomBreakdown: PerRoomBreakdown[] = [];
+
+  // Calculate per-room: base rate + pax surcharge + per-person addons
+  for (const entry of roomEntries) {
+    const { roomId, type, numAdults, numChildren } = entry;
+    const roomPax = numAdults + numChildren;
+    // Free child policy: 1 child free per room
+    const freeChildren = Math.min(numChildren, 1);
+    const billablePax = roomPax - freeChildren;
+    const extraPax = Math.max(0, billablePax - type.base_pax);
+
+    nights = calculateNightBreakdowns(checkIn, checkOut, type, rateAdjustments);
+    totalNights = nights.length;
+    const baseAmount = nights.reduce((sum, n) => sum + n.effectiveRate, 0);
+    const paxSurcharge = extraPax * type.additional_pax_fee * totalNights;
+
+    // Per-person addons for this room
+    const roomAddons = perRoomAddons[roomId] ?? [];
+    let roomAddonsAmount = 0;
+    for (const { addon, quantity } of roomAddons) {
+      roomAddonsAmount += addon.price * roomPax * quantity;
+    }
+
+    globalTotalBaseRate += baseAmount;
+    globalTotalPaxSurcharge += paxSurcharge;
+    globalExtraPax += extraPax;
+
+    perRoomBreakdown.push({
+      roomId,
+      typeId: type.id,
+      baseAmount,
+      paxSurcharge,
+      addonsAmount: roomAddonsAmount,
+      totalAmount: baseAmount + paxSurcharge + roomAddonsAmount,
+    });
+  }
+
+  // Global addons (per_booking) charged once
+  let globalAddonsTotal = 0;
+  for (const { addon, quantity } of globalAddons) {
+    globalAddonsTotal += addon.price * quantity;
+  }
+
+  const addonsTotal = perRoomBreakdown.reduce((s, r) => s + r.addonsAmount, 0) + globalAddonsTotal;
+  const grandTotal = globalTotalBaseRate + globalTotalPaxSurcharge + addonsTotal;
+
+  return {
+    nights,
+    totalNights,
+    totalBaseRate: globalTotalBaseRate,
+    extraPax: globalExtraPax,
+    paxSurchargePerNight: totalNights > 0 ? globalTotalPaxSurcharge / totalNights : 0,
+    totalPaxSurcharge: globalTotalPaxSurcharge,
+    addonsTotal,
+    grandTotal,
+    perRoomBreakdown,
   };
 }
 

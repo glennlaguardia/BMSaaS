@@ -18,7 +18,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, rooms(name, view_description), accommodation_types(name), booking_addons(*, addons(name, price)), booking_status_log(*)')
+      .select('*, rooms(name, view_description), accommodation_types(name), booking_addons(*, addons(name, price)), booking_status_log(*), booking_groups(group_reference_number, total_amount)')
       .eq('id', id)
       .eq('tenant_id', session.tenant_id)
       .single();
@@ -73,10 +73,11 @@ export async function PATCH(
       if (parsed.data.status === 'checked_in') updateData.checked_in_at = new Date().toISOString();
       if (parsed.data.status === 'checked_out') updateData.checked_out_at = new Date().toISOString();
 
-      await supabase.from('bookings').update(updateData).eq('id', id);
+      const { error: updateErr } = await supabase.from('bookings').update(updateData).eq('id', id);
+      if (updateErr) throw updateErr;
 
       // Log the change
-      await supabase.from('booking_status_log').insert({
+      const { error: logErr } = await supabase.from('booking_status_log').insert({
         tenant_id: session.tenant_id,
         booking_id: id,
         booking_type: 'overnight',
@@ -87,6 +88,7 @@ export async function PATCH(
         change_source: 'admin',
         notes: parsed.data.notes || null,
       });
+      if (logErr) console.error('[admin/bookings/[id]] status log error:', logErr);
 
     } else if (body.payment_status) {
       const parsed = updatePaymentStatusSchema.safeParse(body);
@@ -112,10 +114,11 @@ export async function PATCH(
       if (parsed.data.payment_reference) updateData.payment_reference = parsed.data.payment_reference;
       if (parsed.data.payment_status === 'paid') updateData.paid_at = new Date().toISOString();
 
-      await supabase.from('bookings').update(updateData).eq('id', id);
+      const { error: payErr } = await supabase.from('bookings').update(updateData).eq('id', id);
+      if (payErr) throw payErr;
 
       // Log the change
-      await supabase.from('booking_status_log').insert({
+      const { error: payLogErr } = await supabase.from('booking_status_log').insert({
         tenant_id: session.tenant_id,
         booking_id: id,
         booking_type: 'overnight',
@@ -126,6 +129,7 @@ export async function PATCH(
         change_source: 'admin',
         notes: parsed.data.notes || null,
       });
+      if (payLogErr) console.error('[admin/bookings/[id]] payment log error:', payLogErr);
     }
 
     return NextResponse.json({ success: true });

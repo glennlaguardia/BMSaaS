@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MessageSquare, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, MessageSquare, AlertCircle, UtensilsCrossed, Ticket } from 'lucide-react';
 import type { BookingState } from './BookingWizard';
 
 interface StepDetailsProps {
@@ -219,6 +219,44 @@ export function StepDetails({ state, updateState }: StepDetailsProps) {
           <p className="text-xs text-forest-500/35 mt-1 text-right">
             {state.specialRequests.length}/1000
           </p>
+        </div>
+
+        {/* Food Restrictions */}
+        <div>
+          <Label htmlFor="foodRestrictions" className="text-sm font-medium text-forest-700 flex items-center gap-1.5">
+            <UtensilsCrossed className="w-3.5 h-3.5 text-forest-500" />
+            Food Restrictions / Allergies
+            <span className="text-forest-500/35 font-normal">(optional)</span>
+          </Label>
+          <Textarea
+            id="foodRestrictions"
+            value={state.foodRestrictions}
+            onChange={(e) => updateState({ foodRestrictions: e.target.value })}
+            placeholder="E.g. vegetarian, no pork, lactose intolerant, nut allergy..."
+            className="mt-1.5 min-h-[80px]"
+            maxLength={500}
+          />
+          <p className="text-xs text-forest-500/35 mt-1 text-right">
+            {state.foodRestrictions.length}/500
+          </p>
+        </div>
+
+        {/* Voucher Code */}
+        <div>
+          <Label htmlFor="voucherCode" className="text-sm font-medium text-forest-700 flex items-center gap-1.5">
+            <Ticket className="w-3.5 h-3.5 text-forest-500" />
+            Voucher Code
+            <span className="text-forest-500/35 font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="voucherCode"
+            value={state.voucherCode}
+            onChange={(e) => updateState({ voucherCode: e.target.value.toUpperCase() })}
+            placeholder="Enter voucher code"
+            className="mt-1.5 font-mono uppercase tracking-wider"
+            maxLength={50}
+          />
+          <p className="text-xs text-forest-500/35 mt-1">Discount will be applied upon admin verification.</p>
         </div>
       </div>
     </div>

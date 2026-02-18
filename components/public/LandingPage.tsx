@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useEffect, useState } from 'react';
 import { Navbar } from '@/components/public/Navbar';
 import { Hero } from '@/components/public/Hero';
 import { About } from '@/components/public/About';
@@ -11,6 +12,8 @@ import { Testimonials } from '@/components/public/Testimonials';
 import { Location } from '@/components/public/Location';
 import { Contact } from '@/components/public/Contact';
 import { Footer } from '@/components/public/Footer';
+import { PromoBanner } from '@/components/public/PromoBanner';
+import { TenantBranding } from '@/components/public/TenantBranding';
 import type { Tenant, WebsiteSection, AccommodationType, Testimonial } from '@/types';
 
 interface LandingPageProps {
@@ -22,55 +25,91 @@ interface LandingPageProps {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function LandingPage({ tenant, sections, types, testimonials }: LandingPageProps) {
-  const sectionMap = new Map<string, Record<string, unknown>>();
+  const [adjustments, setAdjustments] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/public/rate-adjustments')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setAdjustments(data.data || []);
+      })
+      .catch(console.error);
+  }, []);
+
+  const sectionMap = new Map<string, { content: Record<string, unknown>; settings: WebsiteSection['settings'] }>();
   for (const section of sections) {
-    sectionMap.set(section.section_type, section.content);
+    sectionMap.set(section.section_type, { content: section.content, settings: section.settings });
   }
 
   const orderedTypes = sections.map((s) => s.section_type);
 
   return (
     <div className="min-h-screen">
+      <TenantBranding tenant={tenant} />
       <Navbar tenantName={tenant.name} />
 
       {orderedTypes.map((type) => {
-        const content = (sectionMap.get(type) || {}) as any;
+        const entry = sectionMap.get(type);
+        const content = (entry?.content || {}) as any;
+        const settings = entry?.settings || null;
+
+        // Build per-section inline style from settings
+        const sectionStyle: React.CSSProperties = {};
+        if (settings?.background_color) sectionStyle.backgroundColor = settings.background_color;
+        if (settings?.text_color) sectionStyle.color = settings.text_color;
+        const paddingClass = settings?.padding === 'compact' ? 'py-12 md:py-16' : settings?.padding === 'spacious' ? 'py-32 md:py-44' : '';
+
+        const wrapSection = (node: React.ReactNode) => {
+          if (!settings?.background_color && !settings?.text_color && !paddingClass) return node;
+          return <div style={sectionStyle} className={paddingClass || undefined}>{node}</div>;
+        };
 
         switch (type) {
           case 'hero':
-            return <Hero key={type} content={content} tenantName={tenant.name} />;
+            return (
+              <div key="hero-with-promo">
+                {wrapSection(<Hero content={content} tenantName={tenant.name} />)}
+                {adjustments.length > 0 && <PromoBanner adjustments={adjustments} />}
+              </div>
+            );
           case 'about':
-            return <About key={type} content={content} />;
+            return <React.Fragment key={type}>{wrapSection(<About content={content} />)}</React.Fragment>;
           case 'accommodations':
-            return <Accommodations key={type} content={content} types={types} />;
+            return <React.Fragment key={type}>{wrapSection(<Accommodations content={content} types={types} adjustments={adjustments} />)}</React.Fragment>;
           case 'activities':
-            return <Activities key={type} content={content} />;
+            return <React.Fragment key={type}>{wrapSection(<Activities content={content} />)}</React.Fragment>;
           case 'gallery':
-            return <Gallery key={type} content={content} />;
+            return <React.Fragment key={type}>{wrapSection(<Gallery content={content} />)}</React.Fragment>;
           case 'pricing':
-            return <Pricing key={type} content={content} types={types} />;
+            return <React.Fragment key={type}>{wrapSection(<Pricing content={content} types={types} adjustments={adjustments} />)}</React.Fragment>;
           case 'testimonials':
-            return <Testimonials key={type} content={content} testimonials={testimonials} />;
+            return <React.Fragment key={type}>{wrapSection(<Testimonials content={content} testimonials={testimonials} />)}</React.Fragment>;
           case 'location':
             return (
-              <Location
-                key={type}
-                content={content}
-                address={tenant.address}
-                latitude={tenant.gps_latitude}
-                longitude={tenant.gps_longitude}
-              />
+              <React.Fragment key={type}>
+                {wrapSection(
+                  <Location
+                    content={content}
+                    address={tenant.address}
+                    latitude={tenant.gps_latitude}
+                    longitude={tenant.gps_longitude}
+                  />
+                )}
+              </React.Fragment>
             );
           case 'contact':
             return (
-              <Contact
-                key={type}
-                content={content}
-                phone={tenant.contact_phone}
-                phone2={tenant.contact_phone_2}
-                email={tenant.contact_email}
-                facebookUrl={tenant.facebook_url}
-              />
+              <React.Fragment key={type}>
+                {wrapSection(
+                  <Contact
+                    content={content}
+                    phone={tenant.contact_phone}
+                    phone2={tenant.contact_phone_2}
+                    email={tenant.contact_email}
+                    facebookUrl={tenant.facebook_url}
+                  />
+                )}
+              </React.Fragment>
             );
           default:
             return null;

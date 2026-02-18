@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+// SVG removed: SVG files can contain embedded JavaScript (XSS vector)
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
@@ -14,14 +15,16 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'general';
+    // Sanitize folder to prevent path traversal (only allow alphanumeric, hyphens, underscores)
+    const rawFolder = (formData.get('folder') as string) || 'general';
+    const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50) || 'general';
 
     if (!file) {
       return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ success: false, error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF, SVG' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 });
     }
 
     if (file.size > MAX_SIZE) {

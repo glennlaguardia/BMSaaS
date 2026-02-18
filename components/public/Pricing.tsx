@@ -1,106 +1,124 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check, ArrowRight } from 'lucide-react';
-import { formatPHP } from '@/lib/pricing';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
+import { Users, Plus } from 'lucide-react';
 import type { AccommodationType } from '@/types';
 
 interface PricingProps {
-  content: {
-    heading?: string;
-    subtitle?: string;
-    day_tour_note?: string;
-  };
-  types: AccommodationType[];
+    content: {
+        title?: string;
+        subtitle?: string;
+    };
+    types: AccommodationType[];
+    adjustments?: unknown[];
 }
 
 export function Pricing({ content, types }: PricingProps) {
-  return (
-    <section id="pricing" className="py-24 md:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-amber-300 font-body font-semibold tracking-[0.2em] uppercase text-xs mb-4">
-            Pricing
-          </p>
-          <h2 className="font-display text-4xl md:text-5xl font-semibold text-forest-500 leading-[1.15] tracking-tight">
-            {content.heading || 'Rates & Pricing'}
-          </h2>
-          <p className="text-forest-500/50 mt-4 text-[15px]">
-            {content.subtitle || 'Transparent pricing'}
-          </p>
-        </div>
+    const headerReveal = useScrollReveal<HTMLDivElement>();
+    const cardsReveal = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-children">
-          {types.map((type) => {
-            const inclusions = (type.inclusions as string[]) || [];
-            const hasWeekendDiff = type.base_rate_weekday !== type.base_rate_weekend;
-            return (
-              <div
-                key={type.id}
-                className="group rounded-2xl border border-forest-100/40 p-6 hover:border-forest-500/20 flex flex-col bg-white card-lift"
-              >
-                <h3 className="font-display font-semibold text-forest-500 text-lg">{type.name}</h3>
-                <div className="mt-4">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-display text-3xl font-semibold text-forest-700">
-                      {formatPHP(type.base_rate_weekday)}
-                    </span>
-                    <span className="text-sm text-forest-500/40 font-medium">/night</span>
-                  </div>
-                  {hasWeekendDiff && (
-                    <p className="text-xs text-forest-500/35 mt-1 font-medium">
-                      Weekend: {formatPHP(type.base_rate_weekend)}/night
-                    </p>
-                  )}
-                </div>
-
-                <p className="text-sm text-forest-500/45 mt-3 font-medium">
-                  Base {type.base_pax} guests &middot; Max {type.max_pax} guests
-                </p>
-                {type.additional_pax_fee > 0 && (
-                  <p className="text-xs text-forest-500/35">
-                    +{formatPHP(type.additional_pax_fee)} per extra guest
-                  </p>
-                )}
-
-                <div className="mt-5 space-y-2.5 flex-1">
-                  {inclusions.slice(0, 5).map((item) => (
-                    <div key={item} className="flex items-start gap-2.5 text-sm text-forest-500/60">
-                      <div className="w-4 h-4 rounded-full bg-forest-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-2.5 h-2.5 text-forest-500" />
-                      </div>
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                  {inclusions.length > 5 && (
-                    <p className="text-xs text-forest-500/30 pl-6 font-medium">
-                      +{inclusions.length - 5} more inclusions
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full mt-6 rounded-full font-semibold group/btn hover:bg-forest-500 hover:text-white hover:border-forest-500 transition-all duration-300"
+    return (
+        <section id="pricing" className="py-20 md:py-28 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div
+                    ref={headerReveal.ref}
+                    className={cn('text-center mb-14 reveal', headerReveal.isVisible && 'visible')}
                 >
-                  <Link href="/book" className="flex items-center justify-center gap-2">
-                    Reserve
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
-                  </Link>
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                    <p className="text-accent font-body font-medium tracking-[0.2em] uppercase text-xs mb-4">
+                        Pricing
+                    </p>
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-forest-700 leading-tight tracking-tight accent-line-center">
+                        {content.title || 'Rates & Pricing'}
+                    </h2>
+                    {content.subtitle && (
+                        <p className="mt-6 text-forest-500/60 max-w-2xl mx-auto text-base sm:text-lg">
+                            {content.subtitle}
+                        </p>
+                    )}
+                </div>
 
-        {content.day_tour_note && (
-          <div className="mt-12 text-center">
-            <p className="inline-block bg-cream-100 text-forest-500 px-7 py-3.5 rounded-full text-sm font-medium border border-forest-100/20">
-              {content.day_tour_note}
-            </p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
+                {/* Pricing cards */}
+                <div
+                    ref={cardsReveal.ref}
+                    className={cn(
+                        'grid sm:grid-cols-2 lg:grid-cols-4 gap-5 stagger-reveal',
+                        cardsReveal.isVisible && 'visible'
+                    )}
+                >
+                    {types.map((type) => (
+                        <div
+                            key={type.id}
+                            className="card-lift bg-cream-50 rounded-2xl border border-cream-300/50 p-6 flex flex-col"
+                        >
+                            <h3 className="font-display text-xl font-semibold text-forest-700 tracking-tight">
+                                {type.name}
+                            </h3>
+
+                            {/* Rates */}
+                            <div className="mt-5 space-y-2">
+                                <div className="flex items-baseline justify-between">
+                                    <span className="text-xs font-medium text-forest-500/45 uppercase tracking-wider">Weekday</span>
+                                    <span className="text-lg font-bold text-forest-700">
+                                        ₱{type.base_rate_weekday.toLocaleString()}
+                                        <span className="text-xs font-normal text-forest-500/40 ml-1">/night</span>
+                                    </span>
+                                </div>
+                                <div className="flex items-baseline justify-between">
+                                    <span className="text-xs font-medium text-forest-500/45 uppercase tracking-wider">Weekend</span>
+                                    <span className="text-lg font-bold text-terracotta-500">
+                                        ₱{type.base_rate_weekend.toLocaleString()}
+                                        <span className="text-xs font-normal text-forest-500/40 ml-1">/night</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="my-5 border-t border-cream-300/50" />
+
+                            {/* Capacity */}
+                            <div className="flex items-center gap-2 text-sm text-forest-500/60">
+                                <Users className="w-4 h-4 text-forest-400" />
+                                <span>Base {type.base_pax} guests · Max {type.max_pax} guests</span>
+                            </div>
+
+                            {/* Extra pax */}
+                            {type.additional_pax_fee > 0 && (
+                                <div className="flex items-center gap-2 text-sm text-forest-500/50 mt-2">
+                                    <Plus className="w-4 h-4 text-forest-400" />
+                                    <span>₱{type.additional_pax_fee.toLocaleString()} per extra guest</span>
+                                </div>
+                            )}
+
+                            {/* Inclusions preview */}
+                            {type.inclusions && type.inclusions.length > 0 && (
+                                <div className="mt-4">
+                                    <p className="text-xs text-forest-500/40 font-medium">Includes:</p>
+                                    <p className="text-xs text-forest-500/60 mt-1 line-clamp-2">
+                                        {type.inclusions.slice(0, 3).join(', ')}
+                                        {type.inclusions.length > 3 && ` +${type.inclusions.length - 3} more`}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* CTA */}
+                            <div className="mt-auto pt-5">
+                                <Button asChild variant="terracotta" className="w-full rounded-full" size="sm">
+                                    <Link href="/book">Reserve</Link>
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Day tour note */}
+                <p className="text-center text-forest-500/40 text-sm mt-8">
+                    Day Tour: PHP 200-350 per person (2-5 PM, includes welcome juice and platter)
+                </p>
+            </div>
+        </section>
+    );
 }

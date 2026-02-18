@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { sanitizeSearchInput } from '@/lib/sanitize';
+import { guestFilterSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,13 +12,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20));
-    const search = searchParams.get('search') || '';
-    const sort_by = searchParams.get('sort_by') || 'last_visit';
-    const sort_order = searchParams.get('sort_order') || 'desc';
-    const min_bookings = searchParams.get('min_bookings');
-    const min_spent = searchParams.get('min_spent');
+    const parsed = guestFilterSchema.safeParse({
+      page: searchParams.get('page') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      search: searchParams.get('search') ?? undefined,
+      sort_by: searchParams.get('sort_by') ?? undefined,
+      sort_order: searchParams.get('sort_order') ?? undefined,
+      min_bookings: searchParams.get('min_bookings') ?? undefined,
+      min_spent: searchParams.get('min_spent') ?? undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const filters = parsed.data;
+    const { page, limit, search, sort_by, sort_order, min_bookings, min_spent } = filters;
 
     // Map sort_by to actual column names
     const sortColumnMap: Record<string, string> = {
@@ -35,15 +44,18 @@ export async function GET(request: NextRequest) {
       .eq('tenant_id', session.tenant_id);
 
     if (search) {
-      query = query.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%`);
+      const safe = sanitizeSearchInput(search);
+      if (safe) {
+        query = query.or(`email.ilike.%${safe}%,first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`);
+      }
     }
 
-    if (min_bookings) {
-      query = query.gte('total_bookings', parseInt(min_bookings));
+    if (min_bookings !== undefined) {
+      query = query.gte('total_bookings', min_bookings);
     }
 
-    if (min_spent) {
-      query = query.gte('total_spent', parseFloat(min_spent));
+    if (min_spent !== undefined) {
+      query = query.gte('total_spent', min_spent);
     }
 
     const { data, error, count } = await query

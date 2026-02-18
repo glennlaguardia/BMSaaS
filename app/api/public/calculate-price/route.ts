@@ -3,10 +3,17 @@ import { getTenantId } from '@/lib/tenant';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { calculatePrice } from '@/lib/pricing';
 import { calculatePriceSchema } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 import type { AccommodationType, RateAdjustment, Addon } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 60 price calculations per minute per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/calculate-price', { windowMs: 60_000, max: 60 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const tenantId = await getTenantId();
     if (!tenantId) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });

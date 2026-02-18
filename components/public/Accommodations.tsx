@@ -1,123 +1,117 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Users, Maximize, ArrowRight } from 'lucide-react';
-import { formatPHP } from '@/lib/pricing';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
 import type { AccommodationType } from '@/types';
 
 interface AccommodationsProps {
-  content: {
-    heading?: string;
-    subtitle?: string;
-  };
-  types: AccommodationType[];
+    content: {
+        title?: string;
+        subtitle?: string;
+    };
+    types: AccommodationType[];
+    adjustments?: unknown[];
 }
 
 export function Accommodations({ content, types }: AccommodationsProps) {
-  return (
-    <section id="accommodations" className="py-24 md:py-32 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-amber-300 font-body font-semibold tracking-[0.2em] uppercase text-xs mb-4">
-            Accommodations
-          </p>
-          <h2 className="font-display text-4xl md:text-5xl font-semibold text-forest-500 leading-[1.15] tracking-tight">
-            {content.heading || 'Our Accommodations'}
-          </h2>
-          <p className="text-forest-500/50 mt-4 text-[15px] leading-relaxed">
-            {content.subtitle || 'Choose your highland retreat'}
-          </p>
-        </div>
+    const headerReveal = useScrollReveal<HTMLDivElement>();
+    const cardsReveal = useScrollReveal<HTMLDivElement>({ threshold: 0.1 });
 
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 stagger-children">
-          {types.map((type) => {
-            const amenities = (type.amenities as string[]) || [];
-            return (
-              <div
-                key={type.id}
-                className="group flex flex-col rounded-2xl overflow-hidden bg-white border border-forest-100/40 shadow-sm hover:border-forest-100/60 card-lift"
-              >
-                {/* Image */}
-                <div className="h-60 bg-gradient-to-br from-forest-500/10 via-forest-500/5 to-amber-300/10 relative overflow-hidden">
-                  {type.thumbnail_url ? (
-                    <img
-                      src={type.thumbnail_url}
-                      alt={type.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,_var(--tw-gradient-stops))] from-amber-300/5 to-transparent" />
-                      <div className="text-center relative z-10">
-                        <div className="w-16 h-16 rounded-full bg-forest-500/10 flex items-center justify-center mx-auto mb-3">
-                          <span className="font-display text-2xl text-forest-500/40">
-                            {type.name.charAt(0)}
-                          </span>
-                        </div>
-                        <p className="text-xs text-forest-500/30 font-medium tracking-wider uppercase">Photos coming soon</p>
-                      </div>
-                    </div>
-                  )}
+    return (
+        <section id="accommodations" className="py-20 md:py-28 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
+                <div
+                    ref={headerReveal.ref}
+                    className={cn('text-center mb-14 reveal', headerReveal.isVisible && 'visible')}
+                >
+                    <p className="text-accent font-body font-medium tracking-[0.2em] uppercase text-xs mb-4">
+                        Accommodations
+                    </p>
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-forest-700 leading-tight tracking-tight accent-line-center">
+                        {content.title || 'Our Accommodations'}
+                    </h2>
+                    {content.subtitle && (
+                        <p className="mt-6 text-forest-500/60 max-w-2xl mx-auto text-base sm:text-lg">
+                            {content.subtitle}
+                        </p>
+                    )}
                 </div>
 
-                <div className="p-6 lg:p-7 flex flex-col flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl font-semibold text-forest-500">
-                      {type.name}
-                    </h3>
-                    <span className="text-sm font-semibold text-amber-400 whitespace-nowrap bg-amber-50/80 px-3 py-1 rounded-full">
-                      {formatPHP(Math.min(type.base_rate_weekday, type.base_rate_weekend))}
-                    </span>
-                  </div>
-
-                  <p className="text-forest-500/50 text-sm mt-3 line-clamp-2 leading-relaxed">
-                    {type.short_description || type.description || ''}
-                  </p>
-
-                  <div className="flex items-center gap-5 mt-5 text-sm text-forest-500/50">
-                    <span className="flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-amber-400" />
-                      {type.base_pax}&ndash;{type.max_pax} guests
-                    </span>
-                    {type.size_sqm && (
-                      <span className="flex items-center gap-1.5">
-                        <Maximize className="w-4 h-4 text-amber-400" />
-                        {type.size_sqm} sqm
-                      </span>
+                {/* Accommodation cards — 2 per row */}
+                <div
+                    ref={cardsReveal.ref}
+                    className={cn(
+                        'grid sm:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto stagger-reveal',
+                        cardsReveal.isVisible && 'visible'
                     )}
-                  </div>
+                >
+                    {types.map((type) => {
+                        const thumbnail = type.thumbnail_url || type.images?.[0]?.url;
+                        return (
+                            <div
+                                key={type.id}
+                                className="group card-lift bg-white border border-cream-300/50 rounded-2xl overflow-hidden shadow-sm"
+                            >
+                                {/* Image with hover overlay */}
+                                <div className="relative h-64 overflow-hidden">
+                                    {thumbnail ? (
+                                        <img
+                                            src={thumbnail}
+                                            alt={type.name}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-forest-100 flex items-center justify-center">
+                                            <span className="text-forest-300 text-sm">No image</span>
+                                        </div>
+                                    )}
+                                    {/* Hover gradient overlay with CTA */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-forest-900/80 via-forest-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center pb-6">
+                                        <Button
+                                            asChild
+                                            variant="outline-light"
+                                            size="sm"
+                                            className="rounded-full border-2 px-6 translate-y-3 group-hover:translate-y-0 transition-transform duration-500"
+                                        >
+                                            <Link href="/book">Book This Room</Link>
+                                        </Button>
+                                    </div>
+                                </div>
 
-                  {/* Amenity tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-5 flex-1">
-                    {amenities.slice(0, 5).map((amenity) => (
-                      <span
-                        key={amenity}
-                        className="px-2.5 py-1 bg-cream-100 text-forest-500/60 text-xs rounded-full font-medium h-fit"
-                      >
-                        {amenity}
-                      </span>
-                    ))}
-                    {amenities.length > 5 && (
-                      <span className="px-2.5 py-1 bg-forest-50 text-forest-500/40 text-xs rounded-full h-fit">
-                        +{amenities.length - 5} more
-                      </span>
-                    )}
-                  </div>
+                                {/* Content */}
+                                <div className="p-6">
+                                    <h3 className="font-display text-xl font-semibold text-forest-700 tracking-tight">
+                                        {type.name}
+                                    </h3>
+                                    <p className="text-forest-500/60 text-sm mt-2 line-clamp-2 leading-relaxed">
+                                        {type.short_description || type.description || ''}
+                                    </p>
 
-                  <Button
-                    asChild
-                    className="w-full mt-6 rounded-full font-semibold group/btn"
-                  >
-                    <Link href="/book" className="flex items-center justify-center gap-2">
-                      Book This Room
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5" />
-                    </Link>
-                  </Button>
+                                    <div className="mt-5 flex items-end justify-between">
+                                        <div>
+                                            <div className="flex items-baseline gap-1.5">
+                                                <span className="text-2xl font-bold text-terracotta-500">
+                                                    ₱{type.base_rate_weekday.toLocaleString()}
+                                                </span>
+                                                <span className="text-forest-500/40 text-sm">/ night</span>
+                                            </div>
+                                            <div className="mt-1.5 text-xs text-forest-500/45">
+                                                Base {type.base_pax} guests · Max {type.max_pax} guests
+                                            </div>
+                                        </div>
+                                        <Button asChild variant="terracotta" className="rounded-full" size="sm">
+                                            <Link href="/book">Reserve</Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
+            </div>
+        </section>
+    );
 }

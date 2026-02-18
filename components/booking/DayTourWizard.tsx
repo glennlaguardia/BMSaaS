@@ -40,7 +40,7 @@ export function DayTourWizard({ tenant, addons }: DayTourWizardProps) {
 
   // Step 1 — Date & Guests
   const [tourDate, setTourDate] = useState('');
-  const [numAdults, setNumAdults] = useState(2);
+  const [numAdults, setNumAdults] = useState(1);
   const [numChildren, setNumChildren] = useState(0);
 
   // Step 2 — Add-ons
@@ -372,11 +372,11 @@ export function DayTourWizard({ tenant, addons }: DayTourWizardProps) {
             {/* ---- Step 1: Date & Guests ---- */}
             {step === 1 && (
               <div>
-                <h2 className="text-xl font-bold text-forest-500 mb-1">
+                <h2 className="text-xl font-bold text-forest-600 mb-1">
                   <CalendarDays className="w-5 h-5 inline-block mr-1.5 -mt-0.5 text-amber-400" />
                   Choose Your Date & Guests
                 </h2>
-                <p className="text-sm text-forest-500/45 mb-6">
+                <p className="text-sm text-forest-600/70 mb-6">
                   Pick a date and let us know how many guests are coming.
                 </p>
 
@@ -385,10 +385,10 @@ export function DayTourWizard({ tenant, addons }: DayTourWizardProps) {
                   <p className="text-sm font-medium text-forest-700">
                     Day Tour Hours
                   </p>
-                  <p className="text-sm text-forest-500/60 mt-0.5">
+                  <p className="text-sm text-forest-600/80 mt-0.5">
                     {tenant.day_tour_start} — {tenant.day_tour_end}
                   </p>
-                  <p className="text-xs text-forest-500/40 mt-2">
+                  <p className="text-xs text-forest-600/70 mt-2">
                     {formatPHP(tenant.day_tour_rate_adult)}/adult &middot;{' '}
                     {formatPHP(tenant.day_tour_rate_child)}/child
                   </p>

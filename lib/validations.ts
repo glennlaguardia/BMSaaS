@@ -23,8 +23,41 @@ export const createBookingSchema = z.object({
   special_requests: z.string().max(1000).optional().nullable(),
   addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
+  addon_prices: z.array(z.number().min(0).max(999999)).optional().default([]),
   payment_method: z.enum(['online', 'manual']).optional(),
   source: z.enum(['online', 'manual', 'phone', 'facebook', 'walk_in']).optional().default('online'),
+  base_amount: z.number().min(0).max(999999).optional().default(0),
+  pax_surcharge: z.number().min(0).max(999999).optional().default(0),
+  addons_amount: z.number().min(0).max(999999).optional().default(0),
+  discount_amount: z.number().min(0).max(999999).optional().default(0),
+  total_amount: z.number().min(0).max(9999999).optional().default(0),
+});
+
+const roomInGroupSchema = z.object({
+  room_id: z.string().min(1),
+  accommodation_type_id: z.string().min(1),
+  base_amount: z.number().min(0),
+  pax_surcharge: z.number().min(0),
+  addons_amount: z.number().min(0),
+  total_amount: z.number().min(0),
+  addon_ids: z.array(z.string().min(1)).optional().default([]),
+  addon_quantities: z.array(z.number().int().min(0)).optional().default([]),
+  addon_prices: z.array(z.number().min(0)).optional().default([]),
+});
+
+export const createBookingGroupSchema = z.object({
+  group_booking: z.literal(true),
+  check_in_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  check_out_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  num_adults: z.number().int().min(1).max(20),
+  num_children: z.number().int().min(0).max(20),
+  guest_first_name: z.string().min(1).max(255),
+  guest_last_name: z.string().min(1).max(255),
+  guest_email: z.string().email().max(255),
+  guest_phone: z.string().min(1).max(50),
+  special_requests: z.string().max(1000).optional().nullable(),
+  source: z.enum(['online', 'manual', 'phone', 'facebook', 'walk_in']).optional().default('online'),
+  rooms: z.array(roomInGroupSchema).min(1, 'At least one room is required'),
 });
 
 // ---- Day Tour Booking ----
@@ -124,12 +157,20 @@ export const rateAdjustmentSchema = z.object({
 });
 
 // ---- Admin: Website Section ----
+export const sectionSettingsSchema = z.object({
+  background_color: z.string().max(20).optional(),
+  text_color: z.string().max(20).optional(),
+  padding: z.enum(['compact', 'normal', 'spacious']).optional(),
+  layout_variant: z.string().max(50).optional(),
+}).optional().nullable();
+
 export const websiteSectionSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   subtitle: z.string().max(500).optional().nullable(),
   is_visible: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   content: z.record(z.string(), z.unknown()).optional(),
+  settings: sectionSettingsSchema,
 });
 
 // ---- Contact / Inquiry ----
@@ -139,6 +180,90 @@ export const inquirySchema = z.object({
   message: z.string().min(1).max(2000),
 });
 
+// ---- Branding ----
+const hexColorRegex = /^#[0-9a-fA-F]{3,8}$/;
+const socialLinksSchema = z.record(z.string().max(50), z.string().url().max(500)).optional();
+const bookingRulesSchema = z.record(z.string().max(50), z.unknown()).optional();
+
+export const brandingSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  logo_url: z.string().url().max(1000).optional().nullable(),
+  primary_color: z.string().regex(hexColorRegex, 'Invalid hex color').max(9).optional(),
+  secondary_color: z.string().regex(hexColorRegex, 'Invalid hex color').max(9).optional(),
+  accent_color: z.string().regex(hexColorRegex, 'Invalid hex color').max(9).optional(),
+  font_heading: z.string().max(100).optional(),
+  font_body: z.string().max(100).optional(),
+  font_heading_size: z.string().max(10).optional().nullable(),
+  font_body_size: z.string().max(10).optional().nullable(),
+  font_heading_color: z.string().regex(hexColorRegex, 'Invalid hex color').max(9).optional().nullable(),
+  font_body_color: z.string().regex(hexColorRegex, 'Invalid hex color').max(9).optional().nullable(),
+  tagline: z.string().max(500).optional().nullable(),
+  meta_description: z.string().max(1000).optional().nullable(),
+  social_links: socialLinksSchema,
+  booking_rules: bookingRulesSchema,
+});
+
+// ---- Query Parameter Validation (GET endpoints) ----
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Reusable pagination params — clamps page >= 1, limit 1-100 */
+export const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const bookingFilterSchema = paginationSchema.extend({
+  status: z.enum(['all', 'pending', 'confirmed', 'paid', 'checked_in', 'checked_out', 'cancelled', 'no_show', 'expired']).default('all'),
+  search: z.string().max(200).default(''),
+  booking_group_id: z.string().max(100).optional(),
+  from_date: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  to_date: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  sort_by: z.enum(['created_at', 'check_in_date', 'status_priority']).default('status_priority'),
+  sort_order: z.enum(['asc', 'desc']).default('asc'),
+});
+
+export const guestFilterSchema = paginationSchema.extend({
+  search: z.string().max(200).default(''),
+  sort_by: z.enum(['name', 'total_bookings', 'total_spent', 'last_visit']).default('last_visit'),
+  sort_order: z.enum(['asc', 'desc']).default('desc'),
+  min_bookings: z.coerce.number().int().min(0).optional(),
+  min_spent: z.coerce.number().min(0).optional(),
+});
+
+export const dayTourFilterSchema = paginationSchema.extend({
+  status: z.enum(['all', 'pending', 'confirmed', 'paid', 'completed', 'cancelled', 'no_show', 'expired']).default('all'),
+  search: z.string().max(200).default(''),
+  from_date: z.string().regex(dateRegex).optional(),
+  to_date: z.string().regex(dateRegex).optional(),
+});
+
+export const auditLogFilterSchema = paginationSchema.extend({
+  start_date: z.string().regex(dateRegex).optional(),
+  end_date: z.string().regex(dateRegex).optional(),
+  booking_type: z.enum(['overnight', 'day_tour']).optional(),
+  field_changed: z.enum(['status', 'payment_status']).optional(),
+  change_source: z.enum(['system', 'admin', 'guest', 'cron']).optional(),
+});
+
+export const reportParamsSchema = z.object({
+  period: z.coerce.number().int().min(1).max(365).default(30),
+});
+
+export const reportExportSchema = z.object({
+  type: z.enum(['bookings', 'guests']).default('bookings'),
+  period: z.coerce.number().int().min(1).max(365).default(30),
+});
+
+export const publicDateRangeSchema = z.object({
+  check_in: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  check_out: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  start_date: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  end_date: z.string().regex(dateRegex, 'Invalid date format').optional(),
+  type_id: z.string().max(100).optional(),
+  type_ids: z.string().max(1000).optional(),
+});
+
+// ---- Type Exports ----
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type CreateDayTourBookingInput = z.infer<typeof createDayTourBookingSchema>;

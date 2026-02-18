@@ -16,28 +16,11 @@ export function StepReview({ state, tenant }: StepReviewProps) {
   const [pricing, setPricing] = useState<PriceCalculation | null>(state.pricing);
 
   useEffect(() => {
-    if (!state.accommodationType) return;
-
-    fetch('/api/public/calculate-price', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        accommodation_type_id: state.accommodationType.id,
-        check_in_date: state.checkIn,
-        check_out_date: state.checkOut,
-        num_adults: state.numAdults,
-        num_children: state.numChildren,
-        addon_ids: state.selectedAddons.map(a => a.addon.id),
-        addon_quantities: state.selectedAddons.map(a => a.quantity),
-      }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) setPricing(data.data);
-      })
-      .catch(console.error);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Re-use pricing calculated in the sidebar to avoid duplicate server calls.
+    if (state.pricing) {
+      setPricing(state.pricing);
+    }
+  }, [state.pricing]);
 
   const nights = state.checkIn && state.checkOut
     ? differenceInDays(new Date(state.checkOut), new Date(state.checkIn))
@@ -66,12 +49,24 @@ export function StepReview({ state, tenant }: StepReviewProps) {
           </div>
         </div>
 
-        {/* Accommodation & Room */}
+        {/* Accommodation & Rooms */}
         <div className="flex items-start gap-3 p-4 bg-stone-50 rounded-xl">
           <Bed className="w-5 h-5 text-forest-500 mt-0.5" />
           <div>
-            <p className="font-medium text-forest-700">{state.accommodationType?.name}</p>
-            <p className="text-sm text-forest-500/45">{state.room?.name}</p>
+            <p className="font-medium text-forest-700">
+              {state.selectedTypes && state.selectedTypes.length > 0
+                ? state.selectedTypes.map(t => t.name).join(' · ')
+                : state.accommodationType?.name}
+            </p>
+            {state.selectedRooms && state.selectedRooms.length > 0 ? (
+              <ul className="mt-1 text-sm text-forest-500/45 space-y-0.5">
+                {state.selectedRooms.map(room => (
+                  <li key={room.id}>{room.name}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-forest-500/45">{state.room?.name}</p>
+            )}
           </div>
         </div>
 
@@ -86,6 +81,19 @@ export function StepReview({ state, tenant }: StepReviewProps) {
             <p className="text-sm text-forest-500/45">
               {state.numAdults + state.numChildren} guest{state.numAdults + state.numChildren > 1 ? 's' : ''} total
             </p>
+            {state.selectedRooms && state.selectedRooms.length > 1 && state.perRoomGuests && (
+              <ul className="mt-2 space-y-1 text-xs text-forest-500/45">
+                {state.selectedRooms.map(room => {
+                  const g = state.perRoomGuests[room.id];
+                  if (!g) return null;
+                  return (
+                    <li key={room.id}>
+                      {room.name}: {g.numAdults} adult{g.numAdults !== 1 ? 's' : ''}{g.numChildren > 0 ? `, ${g.numChildren} child${g.numChildren !== 1 ? 'ren' : ''}` : ''}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
         </div>
 

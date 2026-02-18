@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getTenantId } from '@/lib/tenant';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 120 requests per minute per IP
+    const ip = getClientIp(request);
+    const rl = rateLimit(ip, 'public/testimonials', { windowMs: 60_000, max: 120 });
+    if (!rl.success) return rateLimitResponse(rl.resetMs);
+
     const tenantId = await getTenantId();
     if (!tenantId) {
       return NextResponse.json({ success: false, error: 'Tenant not found' }, { status: 404 });

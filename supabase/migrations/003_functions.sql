@@ -119,6 +119,12 @@ BEGIN
     END LOOP;
   END IF;
 
+  -- Update guest total_spent (works for both new and existing guests)
+  UPDATE guests
+  SET total_spent = total_spent + p_total_amount,
+      updated_at = now()
+  WHERE id = v_guest_id;
+
   -- Log the initial status
   INSERT INTO booking_status_log (
     tenant_id, booking_id, booking_type, field_changed,
@@ -223,6 +229,12 @@ BEGIN
       VALUES (v_booking_id, p_addon_ids[v_i], p_addon_quantities[v_i], p_addon_prices[v_i], p_addon_quantities[v_i] * p_addon_prices[v_i]);
     END LOOP;
   END IF;
+
+  -- Update guest total_spent (works for both new and existing guests)
+  UPDATE guests
+  SET total_spent = total_spent + p_total_amount,
+      updated_at = now()
+  WHERE id = v_guest_id;
 
   -- Log initial status
   INSERT INTO booking_status_log (

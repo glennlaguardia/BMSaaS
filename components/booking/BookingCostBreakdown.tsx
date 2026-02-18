@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { differenceInDays } from 'date-fns';
-import { formatPHP } from '@/lib/pricing';
+import { formatPHP, calculateMultiRoomPrice } from '@/lib/pricing';
 import { Receipt, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { RateAdjustment } from '@/types';
 import type { BookingState } from './BookingWizard';
 
 interface BookingCostBreakdownProps {
@@ -22,12 +23,58 @@ export function BookingCostBreakdown({ state, updateState, currentStep }: Bookin
   const nights = hasDates ? differenceInDays(new Date(state.checkOut), new Date(state.checkIn)) : 0;
   const totalPax = state.numAdults + state.numChildren;
 
+  const selectedRooms = state.selectedRooms?.length ? state.selectedRooms : state.room ? [state.room] : [];
+  const selectedTypes = state.selectedTypes?.length ? state.selectedTypes : state.accommodationType ? [state.accommodationType] : [];
+  const isMultiRoom = selectedRooms.length > 1 || selectedTypes.length > 1;
+
   useEffect(() => {
     if (!state.accommodationType || !state.checkIn || !state.checkOut) return;
     if (currentStep < 2) return;
 
     setLoading(true);
     const abortController = new AbortController();
+
+    if (isMultiRoom && selectedRooms.length > 0 && selectedTypes.length > 0) {
+      const typeMap = new Map(selectedTypes.map(t => [t.id, t]));
+      const roomEntries = selectedRooms
+        .map(r => {
+          const typeId = (r as { accommodation_type_id?: string }).accommodation_type_id;
+          const type = (typeId && typeMap.get(typeId)) || state.accommodationType;
+          const g = state.perRoomGuests?.[r.id] ?? { numAdults: 1, numChildren: 0 };
+          return type ? { roomId: r.id, type, numAdults: g.numAdults, numChildren: g.numChildren } : null;
+        })
+        .filter((e): e is { roomId: string; type: NonNullable<typeof state.accommodationType>; numAdults: number; numChildren: number } => e != null);
+
+      if (roomEntries.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // Separate global (per_booking) addons from per-room (per_person) addons
+      const globalAddons = state.selectedAddons.filter(a => a.addon.pricing_model === 'per_booking');
+      const perRoomAddons = state.perRoomAddons ?? {};
+
+      const rateAdjustmentsUrl = `/api/public/rate-adjustments?check_in=${encodeURIComponent(state.checkIn)}&check_out=${encodeURIComponent(state.checkOut)}`;
+      fetch(rateAdjustmentsUrl, { signal: abortController.signal })
+        .then(r => r.json())
+        .then(data => {
+          const adjustments = (data.success && data.data ? data.data : []) as RateAdjustment[];
+          const result = calculateMultiRoomPrice(
+            state.checkIn,
+            state.checkOut,
+            roomEntries,
+            adjustments,
+            globalAddons,
+            perRoomAddons
+          );
+          updateState({ pricing: result });
+        })
+        .catch(err => {
+          if (err.name !== 'AbortError') console.error(err);
+        })
+        .finally(() => setLoading(false));
+      return () => abortController.abort();
+    }
 
     fetch('/api/public/calculate-price', {
       method: 'POST',
@@ -60,14 +107,28 @@ export function BookingCostBreakdown({ state, updateState, currentStep }: Bookin
     state.checkOut,
     state.numAdults,
     state.numChildren,
+    isMultiRoom,
+    selectedRooms.length,
+    selectedTypes.length,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     state.selectedAddons.map(a => `${a.addon.id}:${a.quantity}`).join(','),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(state.perRoomGuests),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(state.perRoomAddons),
     currentStep,
   ]);
 
   if (!hasDates || currentStep < 1) return null;
 
   const pricing = state.pricing;
+  const totalDiscount =
+    pricing && Array.isArray((pricing as { nights?: { adjustmentAmount?: number }[] }).nights)
+      ? ((pricing as { nights: { adjustmentAmount?: number }[] }).nights).reduce(
+        (sum: number, n: { adjustmentAmount?: number }) => sum + (n.adjustmentAmount || 0),
+        0,
+      )
+      : 0;
 
   return (
     <>
@@ -145,6 +206,25 @@ export function BookingCostBreakdown({ state, updateState, currentStep }: Bookin
                     </span>
                     <span className="font-medium text-forest-700">{formatPHP(pricing.totalBaseRate)}</span>
                   </div>
+
+                  {totalDiscount < 0 && (
+                    <>
+                      <div className="flex justify-between text-xs mt-1">
+                        <span className="text-forest-500/45">Original base rate</span>
+                        <span className="font-medium line-through text-forest-500/40">
+                          {formatPHP(pricing.totalBaseRate - totalDiscount)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-forest-500/55">
+                          Discount
+                        </span>
+                        <span className="font-medium text-forest-700">
+                          {formatPHP(totalDiscount)}
+                        </span>
+                      </div>
+                    </>
+                  )}
 
                   {pricing.totalPaxSurcharge > 0 && (
                     <div className="flex justify-between text-sm">

@@ -1,68 +1,107 @@
-import { Camera } from 'lucide-react';
+'use client';
+
+import { useState } from 'react';
+import { useScrollReveal } from '@/hooks/useScrollReveal';
+import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
+
+interface GalleryImage {
+    url: string;
+    alt?: string;
+    category?: string;
+}
 
 interface GalleryProps {
-  content: {
-    heading?: string;
-    subtitle?: string;
-    images?: string[];
-  };
+    content: {
+        title?: string;
+        heading?: string;
+        subtitle?: string;
+        images?: (string | GalleryImage)[];
+    };
+}
+
+function normalizeImages(raw?: (string | GalleryImage)[]): GalleryImage[] {
+    if (!raw) return [];
+    return raw.map((item, i) => {
+        if (typeof item === 'string') return { url: item, alt: `Gallery image ${i + 1}` };
+        return { url: item.url, alt: item.alt || `Gallery image ${i + 1}`, category: item.category };
+    });
 }
 
 export function Gallery({ content }: GalleryProps) {
-  const images = content.images || [];
+    const images = normalizeImages(content.images);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const headerReveal = useScrollReveal<HTMLDivElement>();
+    const gridReveal = useScrollReveal<HTMLDivElement>({ threshold: 0.05 });
 
-  return (
-    <section id="gallery" className="py-24 md:py-32 bg-cream-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-amber-300 font-body font-semibold tracking-[0.2em] uppercase text-xs mb-4">
-            Gallery
-          </p>
-          <h2 className="font-display text-4xl md:text-5xl font-semibold text-forest-500 leading-[1.15] tracking-tight">
-            {content.heading || 'Gallery'}
-          </h2>
-          <p className="text-forest-500/50 mt-4 text-[15px]">
-            {content.subtitle || 'A glimpse of paradise'}
-          </p>
-        </div>
+    if (images.length === 0) {
+        return null;
+    }
 
-        {images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 stagger-children">
-            {images.map((url, i) => (
-              <div
-                key={i}
-                className="aspect-square rounded-xl overflow-hidden shadow-sm group cursor-pointer"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={url}
-                  alt={`Gallery photo ${i + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
+    return (
+        <section id="gallery" className="py-20 md:py-28 bg-cream-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Header */}
                 <div
-                  key={i}
-                  className="aspect-square rounded-xl bg-white/70 border border-forest-100/20 flex items-center justify-center group hover:bg-white transition-colors duration-300"
+                    ref={headerReveal.ref}
+                    className={cn('text-center mb-14 reveal', headerReveal.isVisible && 'visible')}
                 >
-                  <div className="text-center">
-                    <Camera className="w-8 h-8 text-forest-500/15 mx-auto group-hover:text-forest-500/25 transition-colors" />
-                    <p className="text-xs text-forest-500/25 mt-2 font-medium">Photo {i + 1}</p>
-                  </div>
+                    <p className="text-accent font-body font-medium tracking-[0.2em] uppercase text-xs mb-4">
+                        Gallery
+                    </p>
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-forest-700 leading-tight tracking-tight accent-line-center">
+                        {content.title || content.heading || 'A Glimpse of Paradise'}
+                    </h2>
+                    {content.subtitle && (
+                        <p className="mt-6 text-forest-500/60 max-w-2xl mx-auto text-base sm:text-lg">
+                            {content.subtitle}
+                        </p>
+                    )}
                 </div>
-              ))}
+
+                {/* Masonry image grid */}
+                <div
+                    ref={gridReveal.ref}
+                    className={cn('masonry-gallery reveal-scale', gridReveal.isVisible && 'visible')}
+                >
+                    {images.map((img, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setSelectedImage(img.url)}
+                            className="relative group w-full overflow-hidden rounded-xl cursor-pointer block"
+                        >
+                            <img
+                                src={img.url}
+                                alt={img.alt || `Gallery image ${i + 1}`}
+                                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-forest-900/0 group-hover:bg-forest-900/20 transition-colors duration-300 rounded-xl" />
+                        </button>
+                    ))}
+                </div>
             </div>
-            <p className="text-center text-sm text-forest-500/30 mt-8">
-              Upload photos from the admin dashboard to populate the gallery.
-            </p>
-          </>
-        )}
-      </div>
-    </section>
-  );
+
+            {/* Lightbox */}
+            {selectedImage && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-4 right-4 z-10 p-2 text-white/60 hover:text-white transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                    <img
+                        src={selectedImage}
+                        alt="Gallery"
+                        className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl animate-scale-in"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+        </section>
+    );
 }
