@@ -15,8 +15,8 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "BudaBook — Resort Booking Platform",
-  description: "Book luxury glamping and resort accommodations in Bukidnon, Philippines",
+  title: "BudaBook Admin",
+  description: "BudaBook — Resort CRM & Booking Management System",
 };
 
 export default function RootLayout({
