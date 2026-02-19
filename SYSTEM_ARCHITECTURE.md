@@ -1,6 +1,6 @@
 # BudaBook — System Architecture
 
-> **Version**: 1.0 | **Last Updated**: February 2026
+> **Version**: 1.1 | **Last Updated**: February 2026
 
 ## 1. System Overview
 
@@ -54,12 +54,15 @@ erDiagram
     TENANTS ||--o{ GALLERY_IMAGES : "showcases"
     TENANTS ||--o{ GUESTS : "tracks"
     TENANTS ||--o{ API_KEYS : "issues"
+    TENANTS ||--o{ SERVICE_TYPES : "defines"
 
     ACCOMMODATION_TYPES ||--o{ ROOMS : "contains"
     ROOMS ||--o{ BOOKINGS : "reserved_by"
     BOOKINGS ||--o{ BOOKING_ADDONS : "includes"
     ADDONS ||--o{ BOOKING_ADDONS : "used_in"
     BOOKINGS ||--o{ BOOKING_STATUS_LOGS : "audited_by"
+    SERVICE_TYPES ||--o{ SERVICE_BOOKINGS : "booked_via"
+    SERVICE_BOOKINGS ||--o{ SERVICE_BOOKING_ADDONS : "includes"
 ```
 
 ### Tenant Isolation
@@ -235,13 +238,17 @@ apps/saas/
 │       ├── auth/             ← Login/logout endpoints
 │       ├── public/           ← Legacy public API (backwards compat)
 │       └── v1/               ← Versioned API for client websites
+│   ├── book/
+│   │   └── [tenant]/         ← Public booking flow (/book/taglucop-strawberry-hills)
 ├── components/
 │   ├── admin/                ← Dashboard components (sidebar, header)
+│   ├── booking/              ← Booking wizard components
 │   └── ui/                   ← Shared UI primitives (shadcn/ui)
 ├── lib/
 │   ├── auth.ts               ← JWT auth (sign, verify, cookies)
 │   ├── api-key-auth.ts       ← API key validation
 │   ├── cors.ts               ← CORS headers
+│   ├── email.ts              ← Email notifications (Resend / console)
 │   ├── v1-handler.ts         ← API handler factory
 │   ├── rate-limit.ts         ← Rate limiter
 │   ├── pricing.ts            ← Price calculation engine
@@ -249,6 +256,28 @@ apps/saas/
 │   └── supabase/             ← Supabase clients (admin, server, client)
 └── middleware.ts              ← Route protection + tenant resolution
 ```
+
+### 6.2 Booking Flow
+
+The booking wizard is served at `/book/[tenant]` — a public route that doesn't require authentication:
+
+```
+https://saas.budabook.com/book/taglucop-strawberry-hills?return_url=https://client-site.com
+```
+
+- **Tenant slug** comes from the URL path parameter
+- **`return_url`** enables redirect-back to the client website after booking
+- Wizard components: `BookingWizard` (overnight stays), `DayTourWizard` (day tours)
+
+### 6.3 Email Notifications
+
+| Trigger | Email Function | Recipient |
+|---------|---------------|-----------|
+| New booking created (public API) | `sendHandlerNotification` | Tenant's `notification_email` |
+| Admin sets status → `confirmed` | `sendBookingConfirmation` | Guest email |
+| Admin sets status → `cancelled` | `sendCancellationNotice` | Guest email |
+
+All emails are **fire-and-forget** (non-blocking). When `RESEND_API_KEY` is not set, emails are logged to console.
 
 ---
 

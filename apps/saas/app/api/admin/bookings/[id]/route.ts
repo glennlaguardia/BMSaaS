@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { updateBookingStatusSchema, updatePaymentStatusSchema } from '@/lib/validations';
+import { sendBookingConfirmation, sendCancellationNotice } from '@/lib/email';
 
 export async function GET(
   _request: NextRequest,
@@ -56,7 +57,7 @@ export async function PATCH(
       // Get current booking
       const { data: booking } = await supabase
         .from('bookings')
-        .select('status')
+        .select('status, reference_number, guest_first_name, guest_last_name, guest_email, check_in_date, check_out_date, total_amount, rooms(name), accommodation_types(name), tenants(name)')
         .eq('id', id)
         .eq('tenant_id', session.tenant_id)
         .single();
@@ -89,6 +90,33 @@ export async function PATCH(
         notes: parsed.data.notes || null,
       });
       if (logErr) console.error('[admin/bookings/[id]] status log error:', logErr);
+
+      // Fire-and-forget emails based on the new status
+      const tenantRec = booking.tenants as unknown as { name: string } | null;
+      const roomRec = booking.rooms as unknown as { name: string } | null;
+      const accomRec = booking.accommodation_types as unknown as { name: string } | null;
+
+      if (parsed.data.status === 'confirmed') {
+        sendBookingConfirmation({
+          guestName: `${booking.guest_first_name} ${booking.guest_last_name}`,
+          guestEmail: booking.guest_email,
+          referenceNumber: booking.reference_number,
+          accommodationName: accomRec?.name || 'N/A',
+          roomName: roomRec?.name || 'N/A',
+          checkInDate: booking.check_in_date,
+          checkOutDate: booking.check_out_date,
+          totalAmount: `₱${Number(booking.total_amount).toLocaleString()}`,
+          tenantName: tenantRec?.name || 'Resort',
+        }).catch(err => console.error('[Email] confirmation error:', err));
+      } else if (parsed.data.status === 'cancelled') {
+        sendCancellationNotice({
+          guestName: `${booking.guest_first_name} ${booking.guest_last_name}`,
+          guestEmail: booking.guest_email,
+          referenceNumber: booking.reference_number,
+          reason: parsed.data.cancellation_reason || undefined,
+          tenantName: tenantRec?.name || 'Resort',
+        }).catch(err => console.error('[Email] cancellation error:', err));
+      }
 
     } else if (body.payment_status) {
       const parsed = updatePaymentStatusSchema.safeParse(body);

@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createBookingSchema, createBookingGroupSchema } from '@/lib/validations';
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { getClientIp } from '@/lib/get-ip';
+import { sendHandlerNotification } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -119,6 +120,35 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
+
+    // Fire-and-forget: send handler notification email to resort staff
+    (async () => {
+      try {
+        // Fetch tenant notification_email, room name, and accommodation name
+        const [tenantRes, roomRes, accomRes] = await Promise.all([
+          supabase.from('tenants').select('name, notification_email').eq('id', tenantId).single(),
+          supabase.from('rooms').select('name').eq('id', data.room_id).single(),
+          supabase.from('accommodation_types').select('name').eq('id', data.accommodation_type_id).single(),
+        ]);
+
+        const handlerEmail = tenantRes.data?.notification_email || tenantRes.data?.name;
+        if (!handlerEmail) return;
+
+        await sendHandlerNotification({
+          handlerEmail,
+          guestName: `${data.guest_first_name} ${data.guest_last_name}`,
+          referenceNumber: bookingResult.reference_number || 'N/A',
+          accommodationName: accomRes.data?.name || 'N/A',
+          roomName: roomRes.data?.name || 'N/A',
+          checkInDate: data.check_in_date,
+          checkOutDate: data.check_out_date,
+          totalAmount: `₱${Number(data.total_amount).toLocaleString()}`,
+          tenantName: tenantRes.data?.name || 'Resort',
+        });
+      } catch (err) {
+        console.error('[Email] handler notification error:', err);
+      }
+    })();
 
     return NextResponse.json({
       success: true,

@@ -41,6 +41,9 @@ export interface Tenant {
   day_tour_rate_adult: number;
   day_tour_rate_child: number;
   booking_rules: BookingRules;
+  website_url: string | null;
+  notification_email: string | null;
+  enabled_service_types: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -254,7 +257,8 @@ export interface BookingStatusLog {
   tenant_id: string;
   booking_id: string | null;
   day_tour_booking_id: string | null;
-  booking_type: 'overnight' | 'day_tour';
+  service_booking_id: string | null;
+  booking_type: 'overnight' | 'day_tour' | 'service';
   field_changed: 'status' | 'payment_status';
   old_value: string | null;
   new_value: string;
@@ -428,4 +432,77 @@ export interface BookingCreateResult {
   booking_id?: string;
   reference_number?: string;
   error?: string;
+}
+
+// ---- Service Types (Generalized) ----
+export type ServiceCategory = 'venue_reservation' | 'event' | 'experience' | 'package' | 'general';
+export type ServicePricingModel = 'fixed' | 'per_person' | 'per_hour' | 'tiered';
+
+export interface ServicePricingTier {
+  name: string;
+  price: number;
+  description?: string;
+}
+
+export interface ServiceType {
+  id: string;
+  tenant_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  category: ServiceCategory;
+  pricing_model: ServicePricingModel;
+  base_price: number;
+  min_pax: number;
+  max_pax: number | null;
+  pricing_tiers: ServicePricingTier[];
+  inclusions: string[];
+  images: AccommodationImage[];
+  thumbnail_url: string | null;
+  duration_hours: number | null;
+  is_active: boolean;
+  event_date: string | null;
+  event_end_date: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ServiceBookingStatus = 'pending' | 'confirmed' | 'paid' | 'completed' | 'cancelled' | 'no_show' | 'expired';
+
+export interface ServiceBooking {
+  id: string;
+  tenant_id: string;
+  service_type_id: string;
+  reference_number: string;
+  service_date: string;
+  service_end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  num_pax: number;
+  guest_first_name: string;
+  guest_last_name: string;
+  guest_email: string;
+  guest_phone: string;
+  special_requests: string | null;
+  selected_tier: string | null;
+  base_amount: number;
+  addons_amount: number;
+  total_amount: number;
+  status: ServiceBookingStatus;
+  payment_status: PaymentStatus;
+  payment_method: string | null;
+  payment_reference: string | null;
+  payment_proof_url: string | null;
+  paid_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  source: BookingSource;
+  notes: string | null;
+  created_by: string | null;
+  guest_id: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined
+  service_type?: ServiceType;
 }
