@@ -116,7 +116,7 @@ export default function BookingsPage() {
           <p className="text-sm text-forest-500/45 mt-1">{total} total bookings</p>
         </div>
         <Button asChild>
-          <Link href="/goat/bookings/new">
+          <Link href="/dashboard/bookings/new">
             <Plus className="w-4 h-4 mr-2" />
             New Booking
           </Link>
@@ -238,7 +238,7 @@ export default function BookingsPage() {
                         </td>
                         <td className="py-3 px-2 text-right">
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`/goat/bookings/${row.booking.id}`}>
+                            <Link href={`/dashboard/bookings/${row.booking.id}`}>
                               <Eye className="w-4 h-4" />
                             </Link>
                           </Button>
@@ -269,7 +269,7 @@ export default function BookingsPage() {
                         </td>
                         <td className="py-3 px-2 text-right">
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`/goat/bookings/${row.firstBookingId}`}>
+                            <Link href={`/dashboard/bookings/${row.firstBookingId}`}>
                               <Eye className="w-4 h-4" />
                             </Link>
                           </Button>

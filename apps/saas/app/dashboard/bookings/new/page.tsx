@@ -247,10 +247,10 @@ export default function NewManualBookingPage() {
         </p>
         <div className="flex justify-center gap-3">
           <Button asChild variant="outline">
-            <Link href="/goat/bookings">Back to Bookings</Link>
+            <Link href="/dashboard/bookings">Back to Bookings</Link>
           </Button>
           <Button asChild>
-            <Link href={`/goat/bookings/${success.booking_id}`}>View Booking</Link>
+            <Link href={`/dashboard/bookings/${success.booking_id}`}>View Booking</Link>
           </Button>
         </div>
       </div>
@@ -265,7 +265,7 @@ export default function NewManualBookingPage() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/goat/bookings">
+          <Link href="/dashboard/bookings">
             <ArrowLeft className="w-4 h-4 mr-1" /> Back
           </Link>
         </Button>

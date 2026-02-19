@@ -2,9 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'budabook-dev-secret'
-);
+function getJwtSecret(): Uint8Array {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('JWT_SECRET environment variable is required in production');
+        }
+        return new TextEncoder().encode('budabook-dev-only-not-for-production');
+    }
+    return new TextEncoder().encode(secret);
+}
+
+const JWT_SECRET = getJwtSecret();
 const COOKIE_NAME = 'budabook_admin_session';
 
 export async function middleware(request: NextRequest) {
@@ -32,19 +41,19 @@ export async function middleware(request: NextRequest) {
 
     response.headers.set('x-tenant-slug', tenantSlug);
 
-    // Protect /goat/* routes (admin panel) — except the login page itself
-    if (pathname.startsWith('/goat') && pathname !== '/goat') {
+    // Protect /dashboard/* routes (admin panel) — except the login page itself
+    if (pathname.startsWith('/dashboard') && pathname !== '/dashboard') {
         const token = request.cookies.get(COOKIE_NAME)?.value;
 
         if (!token) {
-            return NextResponse.redirect(new URL('/goat', request.url));
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
 
         try {
             await jwtVerify(token, JWT_SECRET);
         } catch {
             // Invalid or expired token — redirect to login
-            return NextResponse.redirect(new URL('/goat', request.url));
+            return NextResponse.redirect(new URL('/dashboard', request.url));
         }
     }
 

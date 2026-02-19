@@ -10,7 +10,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === '/goat';
+  const isLoginPage = pathname === '/dashboard';
 
   if (isLoginPage) {
     return <>{children}</>;

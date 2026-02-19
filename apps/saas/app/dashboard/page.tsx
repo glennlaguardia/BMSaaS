@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push('/goat/dashboard');
+      router.push('/dashboard/overview');
       router.refresh();
     } catch {
       setError('Network error. Please try again.');

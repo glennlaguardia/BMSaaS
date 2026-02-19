@@ -165,7 +165,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/goat/bookings"><ArrowLeft className="w-4 h-4" /></Link>
+          <Link href="/dashboard/bookings"><ArrowLeft className="w-4 h-4" /></Link>
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-forest-700">
@@ -242,7 +242,7 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                         <td className="py-2 text-right">{formatPHP(b.total_amount)}</td>
                         <td className="py-2 text-right">
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`/goat/bookings/${b.id}`}>View</Link>
+                            <Link href={`/dashboard/bookings/${b.id}`}>View</Link>
                           </Button>
                         </td>
                       </tr>

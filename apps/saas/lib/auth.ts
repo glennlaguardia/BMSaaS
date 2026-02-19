@@ -4,9 +4,19 @@ import bcrypt from 'bcryptjs';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { AdminSession } from '@/types';
 
-const JWT_SECRET = new TextEncoder().encode(
-    process.env.JWT_SECRET || 'budabook-dev-secret'
-);
+function getJwtSecret(): Uint8Array {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('JWT_SECRET environment variable is required in production');
+        }
+        console.warn('[auth] JWT_SECRET not set — using insecure dev fallback');
+        return new TextEncoder().encode('budabook-dev-only-not-for-production');
+    }
+    return new TextEncoder().encode(secret);
+}
+
+const JWT_SECRET = getJwtSecret();
 const COOKIE_NAME = 'budabook_admin_session';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 

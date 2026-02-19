@@ -27,43 +27,43 @@ const navSections = [
   {
     label: 'Overview',
     items: [
-      { href: '/goat/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/dashboard/overview', label: 'Dashboard', icon: LayoutDashboard },
     ],
   },
   {
     label: 'Bookings',
     items: [
-      { href: '/goat/bookings', label: 'Bookings', icon: BookOpen },
-      { href: '/goat/calendar', label: 'Calendar', icon: CalendarDays },
-      { href: '/goat/day-tours', label: 'Day Tours', icon: Sun },
+      { href: '/dashboard/bookings', label: 'Bookings', icon: BookOpen },
+      { href: '/dashboard/calendar', label: 'Calendar', icon: CalendarDays },
+      { href: '/dashboard/day-tours', label: 'Day Tours', icon: Sun },
     ],
   },
   {
     label: 'Guests',
     items: [
-      { href: '/goat/guests', label: 'Guest Database', icon: Users },
+      { href: '/dashboard/guests', label: 'Guest Database', icon: Users },
     ],
   },
   {
     label: 'Inventory',
     items: [
-      { href: '/goat/accommodations', label: 'Accommodations', icon: Bed },
-      { href: '/goat/addons', label: 'Add-ons', icon: Package },
-      { href: '/goat/rates', label: 'Rate Adjustments', icon: Percent },
+      { href: '/dashboard/accommodations', label: 'Accommodations', icon: Bed },
+      { href: '/dashboard/addons', label: 'Add-ons', icon: Package },
+      { href: '/dashboard/rates', label: 'Rate Adjustments', icon: Percent },
     ],
   },
 
   {
     label: 'Reports',
     items: [
-      { href: '/goat/reports', label: 'Reports', icon: BarChart3 },
-      { href: '/goat/audit-log', label: 'Audit Log', icon: ClipboardList },
+      { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
+      { href: '/dashboard/audit-log', label: 'Audit Log', icon: ClipboardList },
     ],
   },
   {
     label: 'System',
     items: [
-      { href: '/goat/settings', label: 'Settings', icon: Settings },
+      { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
@@ -75,7 +75,7 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/goat');
+    router.push('/dashboard');
     router.refresh();
   };
 
@@ -111,7 +111,7 @@ export function AdminSidebar() {
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-5 border-b border-forest-100/20">
-          <Link href="/goat/dashboard" className="flex items-center gap-2.5">
+          <Link href="/dashboard/overview" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-forest-500 flex items-center justify-center">
               <Leaf className="w-4 h-4 text-amber-300" />
             </div>

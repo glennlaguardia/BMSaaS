@@ -128,7 +128,7 @@ export default function DashboardPage() {
                 {data.recentBookings.map((booking) => (
                   <Link
                     key={booking.id}
-                    href={`/goat/bookings/${booking.id}`}
+                    href={`/dashboard/bookings/${booking.id}`}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-forest-50/50 transition-colors"
                   >
                     <div>
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 {data.upcomingCheckins.map((booking) => (
                   <Link
                     key={booking.id}
-                    href={`/goat/bookings/${booking.id}`}
+                    href={`/dashboard/bookings/${booking.id}`}
                     className="flex items-center justify-between p-3 rounded-lg hover:bg-forest-50/50 transition-colors"
                   >
                     <div>
