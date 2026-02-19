@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createV1Handler } from '@/lib/v1-handler';
+import { createV1Handler, createV1Options } from '@/lib/v1-handler';
 import { inquirySchema } from '@/lib/validations';
 
 export const POST = createV1Handler(
@@ -22,7 +22,4 @@ export const POST = createV1Handler(
     }
 );
 
-export const OPTIONS = createV1Handler(
-    { endpoint: 'v1/inquiries' },
-    async () => new NextResponse(null, { status: 204 })
-);
+export const OPTIONS = createV1Options();

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createV1Handler } from '@/lib/v1-handler';
+import { createV1Handler, createV1Options } from '@/lib/v1-handler';
 import { calculatePriceSchema } from '@/lib/validations';
 import { calculatePrice } from '@/lib/pricing';
 import type { Addon } from '@/types';
@@ -77,7 +77,4 @@ export const POST = createV1Handler(
     }
 );
 
-export const OPTIONS = createV1Handler(
-    { endpoint: 'v1/calculate-price' },
-    async () => new NextResponse(null, { status: 204 })
-);
+export const OPTIONS = createV1Options();

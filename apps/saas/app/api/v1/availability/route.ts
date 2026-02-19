@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createV1Handler } from '@/lib/v1-handler';
+import { createV1Handler, createV1Options } from '@/lib/v1-handler';
 import { publicDateRangeSchema } from '@/lib/validations';
-import { addDays, format, parseISO } from 'date-fns';
+import { addDays, differenceInDays, format, parseISO } from 'date-fns';
 
 export const GET = createV1Handler(
     { endpoint: 'v1/availability' },
@@ -28,6 +28,15 @@ export const GET = createV1Handler(
         if (!startDate || !endDate) {
             return NextResponse.json(
                 { success: false, error: 'start_date and end_date required', code: 'VALIDATION_ERROR' },
+                { status: 400 }
+            );
+        }
+
+        // Guard against excessive date ranges (max 90 days)
+        const daySpan = differenceInDays(parseISO(endDate), parseISO(startDate));
+        if (daySpan < 0 || daySpan > 90) {
+            return NextResponse.json(
+                { success: false, error: 'Date range must be between 1 and 90 days', code: 'VALIDATION_ERROR' },
                 { status: 400 }
             );
         }
@@ -80,7 +89,4 @@ export const GET = createV1Handler(
     }
 );
 
-export const OPTIONS = createV1Handler(
-    { endpoint: 'v1/availability' },
-    async () => new NextResponse(null, { status: 204 })
-);
+export const OPTIONS = createV1Options();

@@ -43,7 +43,7 @@ export function createV1Handler(options: V1HandlerOptions, handler: HandlerFn) {
     return async function (request: NextRequest): Promise<NextResponse | Response> {
         const origin = request.headers.get('origin');
 
-        // Handle CORS preflight
+        // Handle CORS preflight (shouldn't reach here if OPTIONS is exported separately, but just in case)
         if (request.method === 'OPTIONS') {
             return handlePreflight(origin);
         }
@@ -52,17 +52,26 @@ export function createV1Handler(options: V1HandlerOptions, handler: HandlerFn) {
             // Rate limiting
             const ip = getClientIp(request);
             const rl = rateLimit(ip, endpoint, { windowMs: rateWindowMs, max: rateMax });
-            if (!rl.success) return rateLimitResponse(rl.resetMs);
+            if (!rl.success) {
+                // Add CORS headers to rate limit responses too
+                const resp = rateLimitResponse(rl.resetMs);
+                const corsHeaders = getCorsHeaders(origin);
+                const newResp = new Response(resp.body, {
+                    status: resp.status,
+                    headers: { ...Object.fromEntries(resp.headers.entries()), ...corsHeaders },
+                });
+                return newResp;
+            }
 
             // API key authentication
             const auth = await validateApiKey(request);
             if (!auth) {
-                return unauthorizedResponse();
+                return addCorsHeaders(unauthorizedResponse(), origin);
             }
 
             // Scope validation
             if (!hasScope(auth.scopes, scope)) {
-                return forbiddenResponse(scope);
+                return addCorsHeaders(forbiddenResponse(scope), origin);
             }
 
             // Execute handler
@@ -72,24 +81,36 @@ export function createV1Handler(options: V1HandlerOptions, handler: HandlerFn) {
                 request,
             });
 
-            // Add CORS headers
-            const corsHeaders = getCorsHeaders(origin);
-            for (const [key, value] of Object.entries(corsHeaders)) {
-                response.headers.set(key, value);
-            }
-
-            return response;
+            return addCorsHeaders(response, origin);
         } catch (error) {
             console.error(`[${endpoint}] error:`, error);
             const resp = NextResponse.json(
                 { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' },
                 { status: 500 }
             );
-            const corsHeaders = getCorsHeaders(origin);
-            for (const [key, value] of Object.entries(corsHeaders)) {
-                resp.headers.set(key, value);
-            }
-            return resp;
+            return addCorsHeaders(resp, origin);
         }
     };
 }
+
+/**
+ * Create a CORS preflight handler for v1 routes.
+ * This does NOT require authentication — browsers never send
+ * custom headers (like X-API-Key) on OPTIONS requests.
+ */
+export function createV1Options() {
+    return async function (request: NextRequest): Promise<NextResponse> {
+        const origin = request.headers.get('origin');
+        return handlePreflight(origin);
+    };
+}
+
+/** Helper: add CORS headers to any response */
+function addCorsHeaders(response: NextResponse, origin: string | null): NextResponse {
+    const corsHeaders = getCorsHeaders(origin);
+    for (const [key, value] of Object.entries(corsHeaders)) {
+        response.headers.set(key, value);
+    }
+    return response;
+}
+

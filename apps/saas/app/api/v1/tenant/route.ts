@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createV1Handler } from '@/lib/v1-handler';
+import { createV1Handler, createV1Options } from '@/lib/v1-handler';
 
 export const GET = createV1Handler(
     { endpoint: 'v1/tenant' },
@@ -24,7 +24,4 @@ export const GET = createV1Handler(
     }
 );
 
-export const OPTIONS = createV1Handler(
-    { endpoint: 'v1/tenant' },
-    async () => new NextResponse(null, { status: 204 })
-);
+export const OPTIONS = createV1Options();

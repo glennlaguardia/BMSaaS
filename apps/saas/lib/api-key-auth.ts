@@ -45,12 +45,11 @@ export async function validateApiKey(request: NextRequest): Promise<ApiKeyResult
         // Verify the full key against the hash
         const isValid = await bcrypt.compare(apiKey, key.key_hash);
         if (isValid) {
-            // Update last_used timestamp (fire and forget)
-            supabase
+            // Update last_used timestamp (non-blocking, best-effort)
+            void supabase
                 .from('api_keys')
                 .update({ last_used: new Date().toISOString() })
-                .eq('id', key.id)
-                .then(() => { });
+                .eq('id', key.id);
 
             return {
                 tenantId: key.tenant_id,
