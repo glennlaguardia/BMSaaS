@@ -1,0 +1,76 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { sanitizeSearchInput } from '@/lib/sanitize';
+import { guestFilterSchema } from '@/lib/validations';
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const parsed = guestFilterSchema.safeParse({
+      page: searchParams.get('page') ?? undefined,
+      limit: searchParams.get('limit') ?? undefined,
+      search: searchParams.get('search') ?? undefined,
+      sort_by: searchParams.get('sort_by') ?? undefined,
+      sort_order: searchParams.get('sort_order') ?? undefined,
+      min_bookings: searchParams.get('min_bookings') ?? undefined,
+      min_spent: searchParams.get('min_spent') ?? undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const filters = parsed.data;
+    const { page, limit, search, sort_by, sort_order, min_bookings, min_spent } = filters;
+
+    // Map sort_by to actual column names
+    const sortColumnMap: Record<string, string> = {
+      name: 'first_name',
+      total_bookings: 'total_bookings',
+      total_spent: 'total_spent',
+      last_visit: 'last_visit',
+    };
+    const sortColumn = sortColumnMap[sort_by] || 'last_visit';
+    const ascending = sort_order === 'asc';
+
+    const supabase = createAdminClient();
+    let query = supabase
+      .from('guests')
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', session.tenant_id);
+
+    if (search) {
+      const safe = sanitizeSearchInput(search);
+      if (safe) {
+        query = query.or(`email.ilike.%${safe}%,first_name.ilike.%${safe}%,last_name.ilike.%${safe}%`);
+      }
+    }
+
+    if (min_bookings !== undefined) {
+      query = query.gte('total_bookings', min_bookings);
+    }
+
+    if (min_spent !== undefined) {
+      query = query.gte('total_spent', min_spent);
+    }
+
+    const { data, error, count } = await query
+      .order(sortColumn, { ascending })
+      .range((page - 1) * limit, page * limit - 1);
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination: { page, limit, total: count || 0 },
+    });
+  } catch (error) {
+    console.error('[admin/guests] error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
