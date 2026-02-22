@@ -22,20 +22,20 @@ for (const f of files) {
   sql += content + '\n\n';
 }
 
-// Admin user with pre-computed bcrypt hash of 'epstein'
-sql += `-- Admin user (password: epstein, bcrypt hashed)
+// Admin user with pre-computed bcrypt hash of 'T@gluc0p@dm1n!'
+sql += `-- Admin user (username: TaglucopAdmin, password: T@gluc0p@dm1n!, bcrypt hashed)
 INSERT INTO admin_users (id, tenant_id, username, email, password_hash, full_name, role, is_active)
 VALUES (
   'a1b2c3d4-e5f6-7890-abcd-000000000002',
   'a1b2c3d4-e5f6-7890-abcd-000000000001',
-  'epstein',
+  'TaglucopAdmin',
   'taglucopfarms@gmail.com',
-  '$2b$12$W3.jB8g6yAKNYTsgHZEDMOFrc/p3HnUTM1yyPNXdDkdLnAqpUjlBi',
+  '$2b$12$5sJEpwLDuLKah7GBJFomne7P2PbQ/RyTLcqlSCum2L049cn4OLq5a',
   'Resort Admin',
   'resort_admin',
   true
 )
-ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash;
+ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username, password_hash = EXCLUDED.password_hash;
 `;
 
 writeFileSync(resolve(__dirname, 'full-migration.sql'), sql, 'utf-8');

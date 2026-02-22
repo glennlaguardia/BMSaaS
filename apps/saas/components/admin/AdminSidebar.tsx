@@ -118,7 +118,7 @@ export function AdminSidebar() {
               <Leaf className="w-4 h-4 text-amber-300" />
             </div>
             <div>
-              <span className="font-semibold text-forest-700 text-[15px]">Taglucop</span>
+              <span className="font-semibold text-forest-700 text-[15px]">Taglucop Co.</span>
               <span className="text-[10px] text-forest-500/35 font-semibold tracking-wider uppercase ml-1.5">Admin</span>
             </div>
           </Link>

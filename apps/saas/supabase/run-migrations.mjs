@@ -77,7 +77,7 @@ async function main() {
     
     // Seed admin user with bcrypt-hashed password
     console.log('--- Seeding admin user with hashed password ---');
-    const passwordHash = await hash('epstein', 12);
+    const passwordHash = await hash('T@gluc0p@dm1n!', 12);
     console.log(`  Hash generated.`);
     
     try {
@@ -86,14 +86,14 @@ async function main() {
         VALUES (
           'a1b2c3d4-e5f6-7890-abcd-000000000002',
           'a1b2c3d4-e5f6-7890-abcd-000000000001',
-          'epstein',
+          'TaglucopAdmin',
           'taglucopfarms@gmail.com',
           $1,
           'Resort Admin',
           'resort_admin',
           true
         )
-        ON CONFLICT (username) DO UPDATE SET password_hash = $1;
+        ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username, password_hash = EXCLUDED.password_hash;
       `, [passwordHash]);
       console.log(`  Admin user seeded.\n`);
     } catch (err) {
