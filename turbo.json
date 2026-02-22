@@ -3,7 +3,10 @@
     "globalEnv": [
         "SUPABASE_SERVICE_ROLE_KEY",
         "JWT_SECRET",
-        "BCRYPT_SALT_ROUNDS"
+        "BCRYPT_SALT_ROUNDS",
+        "TENANT_SLUG",
+        "DEFAULT_TENANT_SLUG",
+        "NEXT_PUBLIC_*"
     ],
     "tasks": {
         "dev": {

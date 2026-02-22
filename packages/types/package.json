@@ -8,6 +8,11 @@
         "build": "tsc --noEmit",
         "lint": "echo 'no lint configured'"
     },
+    "turbo": {
+        "build": {
+            "outputs": []
+        }
+    },
     "devDependencies": {
         "typescript": "^5"
     }
