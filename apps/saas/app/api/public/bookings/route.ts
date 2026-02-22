@@ -54,6 +54,8 @@ export async function POST(request: NextRequest) {
         p_special_requests: data.special_requests || null,
         p_source: data.source || 'online',
         p_rooms: roomsPayload,
+        p_food_restrictions: data.food_restrictions || null,
+        p_voucher_code: data.voucher_code || null,
       });
       if (result.error) {
         return NextResponse.json({ success: false, error: result.error.message }, { status: 400 });
@@ -107,6 +109,8 @@ export async function POST(request: NextRequest) {
       p_addon_ids: data.addon_ids || [],
       p_addon_quantities: data.addon_quantities || data.addon_ids?.map(() => 1) || [],
       p_addon_prices: data.addon_prices || [],
+      p_food_restrictions: data.food_restrictions || null,
+      p_voucher_code: data.voucher_code || null,
     });
 
     if (result.error) {
@@ -131,8 +135,8 @@ export async function POST(request: NextRequest) {
           supabase.from('accommodation_types').select('name').eq('id', data.accommodation_type_id).single(),
         ]);
 
-        const handlerEmail = tenantRes.data?.notification_email || tenantRes.data?.name;
-        if (!handlerEmail) return;
+        const handlerEmail = tenantRes.data?.notification_email;
+        if (!handlerEmail) return; // Skip notification if no email configured
 
         await sendHandlerNotification({
           handlerEmail,

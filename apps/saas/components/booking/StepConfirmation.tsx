@@ -41,7 +41,7 @@ export function StepConfirmation({ state, tenant, returnUrl }: StepConfirmationP
   if (state.phone) bookAnotherParams.set('phone', state.phone);
   bookAnotherParams.set('numAdults', String(state.numAdults));
   bookAnotherParams.set('numChildren', String(state.numChildren));
-  const bookAnotherRoomUrl = `/book?${bookAnotherParams.toString()}`;
+  const bookAnotherRoomUrl = `/book/taglucop?${bookAnotherParams.toString()}`;
 
   return (
     <div className="max-w-xl mx-auto px-4 py-12 md:py-20 text-center">
@@ -133,10 +133,10 @@ export function StepConfirmation({ state, tenant, returnUrl }: StepConfirmationP
           </a>
         ) : (
           <Button asChild variant="outline" className="rounded-full px-8">
-            <Link href="/">
+            <a href={process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3001'}>
               <Home className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
+              Back to Website
+            </a>
           </Button>
         )}
       </div>

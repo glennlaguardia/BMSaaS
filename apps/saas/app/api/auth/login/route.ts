@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { authenticateAdmin, setSessionCookie } from '@/lib/auth';
 import { loginSchema } from '@/lib/validations';
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit';
+import { getClientIp } from '@/lib/get-ip';
 
 export async function POST(request: Request) {
     try {
+        // Rate limit: 5 login attempts per 15 minutes per IP (brute-force protection)
+        const ip = getClientIp(request);
+        const rl = rateLimit(ip, 'auth/login', { windowMs: 900_000, max: 5 });
+        if (!rl.success) return rateLimitResponse(rl.resetMs);
         const body = await request.json();
         const parsed = loginSchema.safeParse(body);
 

@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Mail, Phone, MessageSquare, AlertCircle, UtensilsCrossed, Ticket } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { User, Mail, Phone, MessageSquare, AlertCircle, UtensilsCrossed, Ticket, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import type { BookingState } from './BookingWizard';
 
 interface StepDetailsProps {
@@ -40,9 +41,8 @@ function validateField(field: keyof FieldErrors, value: string): string | undefi
       if (!EMAIL_REGEX.test(trimmed)) return 'Please enter a valid email address';
       if (trimmed.length > 255) return 'Email is too long';
       return undefined;
-    case 'phone':
+    case 'phone': {
       if (!trimmed) return 'Phone number is required';
-      // Strip spaces, dashes, parens for validation
       const cleaned = trimmed.replace(/[\s\-()]/g, '');
       if (!PH_PHONE_REGEX.test(cleaned) && cleaned.length < 7) {
         return 'Please enter a valid phone number (e.g. 09171234567)';
@@ -50,6 +50,7 @@ function validateField(field: keyof FieldErrors, value: string): string | undefi
       if (cleaned.length < 7) return 'Phone number is too short';
       if (cleaned.length > 15) return 'Phone number is too long';
       return undefined;
+    }
     default:
       return undefined;
   }
@@ -58,6 +59,13 @@ function validateField(field: keyof FieldErrors, value: string): string | undefi
 export function StepDetails({ state, updateState }: StepDetailsProps) {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherResult, setVoucherResult] = useState<{
+    valid: boolean;
+    message: string;
+    discountAmount?: number;
+    discountLabel?: string;
+  } | null>(null);
 
   const handleBlur = useCallback((field: keyof FieldErrors, value: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
@@ -66,7 +74,6 @@ export function StepDetails({ state, updateState }: StepDetailsProps) {
   }, []);
 
   const handleChange = useCallback((field: keyof FieldErrors, value: string) => {
-    // Validate on change only if the field was already touched
     if (touched[field]) {
       const error = validateField(field, value);
       setErrors(prev => ({ ...prev, [field]: error }));
@@ -81,6 +88,53 @@ export function StepDetails({ state, updateState }: StepDetailsProps) {
       return 'mt-1.5 border-green-300 focus:border-green-400 focus:ring-green-400/20';
     }
     return 'mt-1.5';
+  };
+
+  const handleApplyVoucher = async () => {
+    const code = state.voucherCode.trim();
+    if (!code) return;
+
+    setVoucherLoading(true);
+    setVoucherResult(null);
+
+    try {
+      const bookingAmount = state.pricing?.grandTotal || 0;
+      const res = await fetch('/api/public/validate-voucher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          booking_type: 'overnight',
+          booking_amount: bookingAmount,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        const { discount_amount, discount_type, discount_value } = data.data;
+        const label = discount_type === 'percentage'
+          ? `${discount_value}% off`
+          : `₱${discount_value} off`;
+        setVoucherResult({
+          valid: true,
+          message: `Voucher applied! You save ₱${Math.round(discount_amount).toLocaleString()}`,
+          discountAmount: discount_amount,
+          discountLabel: label,
+        });
+      } else {
+        setVoucherResult({
+          valid: false,
+          message: data.error || 'Invalid voucher code',
+        });
+      }
+    } catch {
+      setVoucherResult({
+        valid: false,
+        message: 'Failed to validate voucher. Please try again.',
+      });
+    } finally {
+      setVoucherLoading(false);
+    }
   };
 
   return (
@@ -248,15 +302,45 @@ export function StepDetails({ state, updateState }: StepDetailsProps) {
             Voucher Code
             <span className="text-forest-500/35 font-normal">(optional)</span>
           </Label>
-          <Input
-            id="voucherCode"
-            value={state.voucherCode}
-            onChange={(e) => updateState({ voucherCode: e.target.value.toUpperCase() })}
-            placeholder="Enter voucher code"
-            className="mt-1.5 font-mono uppercase tracking-wider"
-            maxLength={50}
-          />
-          <p className="text-xs text-forest-500/35 mt-1">Discount will be applied upon admin verification.</p>
+          <div className="flex gap-2 mt-1.5">
+            <Input
+              id="voucherCode"
+              value={state.voucherCode}
+              onChange={(e) => {
+                updateState({ voucherCode: e.target.value.toUpperCase() });
+                if (voucherResult) setVoucherResult(null);
+              }}
+              placeholder="Enter voucher code"
+              className="font-mono uppercase tracking-wider flex-1"
+              maxLength={50}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleApplyVoucher}
+              disabled={!state.voucherCode.trim() || voucherLoading}
+              className="rounded-lg px-4 whitespace-nowrap"
+            >
+              {voucherLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Apply'
+              )}
+            </Button>
+          </div>
+          {voucherResult ? (
+            <p className={`text-xs mt-1.5 flex items-center gap-1 ${voucherResult.valid ? 'text-green-600' : 'text-red-500'}`}>
+              {voucherResult.valid ? (
+                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              )}
+              {voucherResult.message}
+            </p>
+          ) : (
+            <p className="text-xs text-forest-500/35 mt-1">Enter a code and click Apply to validate.</p>
+          )}
         </div>
       </div>
     </div>

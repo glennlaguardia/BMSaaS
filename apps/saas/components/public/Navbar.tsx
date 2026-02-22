@@ -88,7 +88,7 @@ export function Navbar({ tenantName }: NavbarProps) {
                 size="sm"
                 className="rounded-full px-6 shadow-sm whitespace-nowrap"
               >
-                <Link href="/book">Book Your Stay</Link>
+                <Link href="/book/taglucop">Book Your Stay</Link>
               </Button>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function Navbar({ tenantName }: NavbarProps) {
             ))}
             <div className="pt-4 border-t border-forest-100/30 mt-3">
               <Button asChild variant="terracotta" className="w-full rounded-full">
-                <Link href="/book" onClick={() => setMobileOpen(false)}>
+                <Link href="/book/taglucop" onClick={() => setMobileOpen(false)}>
                   Book Your Stay
                 </Link>
               </Button>

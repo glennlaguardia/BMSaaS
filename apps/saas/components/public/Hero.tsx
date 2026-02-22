@@ -98,7 +98,7 @@ export function Hero({ content, tenantName }: HeroProps) {
             variant="terracotta"
             className="w-full sm:w-auto px-10 py-6 text-base rounded-full shadow-lg shadow-terracotta-500/25 hover:shadow-xl hover:shadow-terracotta-500/30 transition-shadow duration-300"
           >
-            <Link href={content.cta_link || '/book'}>
+            <Link href={content.cta_link || '/book/taglucop'}>
               {content.cta_text || 'Book Your Stay'}
             </Link>
           </Button>

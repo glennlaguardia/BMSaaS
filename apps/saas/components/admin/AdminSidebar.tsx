@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Leaf,
+  Ticket,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -50,6 +51,7 @@ const navSections = [
       { href: '/dashboard/accommodations', label: 'Accommodations', icon: Bed },
       { href: '/dashboard/addons', label: 'Add-ons', icon: Package },
       { href: '/dashboard/rates', label: 'Rate Adjustments', icon: Percent },
+      { href: '/dashboard/vouchers', label: 'Vouchers', icon: Ticket },
     ],
   },
 

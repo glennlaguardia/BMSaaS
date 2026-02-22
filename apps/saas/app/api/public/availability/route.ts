@@ -35,6 +35,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'start_date and end_date required' }, { status: 400 });
     }
 
+    // Guard: max 90-day range to prevent DoS via expensive date-by-date loops
+    const rangeMs = parseISO(endDate).getTime() - parseISO(startDate).getTime();
+    const maxRangeMs = 90 * 24 * 60 * 60 * 1000; // 90 days
+    if (rangeMs < 0 || rangeMs > maxRangeMs) {
+      return NextResponse.json(
+        { success: false, error: 'Date range must be between 1 and 90 days' },
+        { status: 400 }
+      );
+    }
+
     const supabase = createAdminClient();
 
     // Get total rooms for the type (or all types)

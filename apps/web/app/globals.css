@@ -1,3 +1,530 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Warm Earth palette --- */
+    --forest: 85 40% 22%;
+    /* Warm olive green */
+    --forest-deep: 85 45% 14%;
+    /* Deep olive */
+    --amber: 30 45% 62%;
+    /* Warm gold */
+    --amber-light: 30 45% 72%;
+    /* Light gold */
+    --cream: 38 35% 93%;
+    /* Warm cream */
+    --cream-deep: 38 25% 88%;
+    /* Deeper cream */
+    --terracotta: 16 65% 48%;
+    /* Warm terracotta CTA */
+    --terracotta-deep: 14 68% 38%;
+    /* Dark terracotta */
+
+    /* --- shadcn variable system --- */
+    --background: 0 0% 100%;
+    --foreground: 25 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 25 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 15% 15%;
+    --primary: 85 40% 22%;
+    --primary-foreground: 40 30% 96%;
+    --secondary: 38 35% 93%;
+    --secondary-foreground: 85 40% 22%;
+    --muted: 38 15% 94%;
+    /* Darker muted-foreground for better readability on light backgrounds */
+    --muted-foreground: 25 15% 25%;
+    /* Secondary body text for subtle labels with sufficient contrast */
+    --text-secondary: 25 12% 38%;
+    --accent: 30 45% 62%;
+    --accent-foreground: 85 45% 14%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 12% 87%;
+    --input: 30 12% 87%;
+    --ring: 85 40% 22%;
+    --chart-1: 85 40% 22%;
+    --chart-2: 30 45% 62%;
+    --chart-3: 38 35% 93%;
+    --chart-4: 150 40% 45%;
+    --chart-5: 16 65% 48%;
+    --radius: 0.625rem;
+  }
+
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* NOTE: No global serif rule for headings. 
+     Use .font-display explicitly on public site display headings only.
+     Admin UI and booking flow use the body font (DM Sans) for readability. */
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+  }
+
+  .font-body {
+    font-family: var(--font-body), system-ui, sans-serif;
+  }
+}
+
+/* ================================================================
+   ANIMATIONS
+   ================================================================ */
+
+/* --- Core keyframes --- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes grain {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  10% {
+    transform: translate(-5%, -10%);
+  }
+
+  30% {
+    transform: translate(3%, -15%);
+  }
+
+  50% {
+    transform: translate(-15%, 5%);
+  }
+
+  70% {
+    transform: translate(8%, 12%);
+  }
+
+  90% {
+    transform: translate(-10%, 5%);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 151, 94, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px 4px rgba(201, 151, 94, 0.15);
+  }
+}
+
+@keyframes discover-bounce {
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0) translateX(-50%);
+  }
+
+  40% {
+    transform: translateY(-10px) translateX(-50%);
+  }
+
+  60% {
+    transform: translateY(-5px) translateX(-50%);
+  }
+}
+
+/* --- Animation classes --- */
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.5s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* --- Scroll-reveal system --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-32px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(32px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-scale.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Stagger children animations */
+.stagger-children>* {
+  animation: fade-up 0.5s ease-out both;
+}
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 400ms;
+}
+
+.stagger-children>*:nth-child(7) {
+  animation-delay: 480ms;
+}
+
+.stagger-children>*:nth-child(8) {
+  animation-delay: 560ms;
+}
+
+/* Scroll-triggered stagger (cards) */
+.stagger-reveal>* {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stagger-reveal.visible>*:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0ms;
+}
+
+.stagger-reveal.visible>*:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 100ms;
+}
+
+.stagger-reveal.visible>*:nth-child(3) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 200ms;
+}
+
+.stagger-reveal.visible>*:nth-child(4) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 300ms;
+}
+
+.stagger-reveal.visible>*:nth-child(5) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 400ms;
+}
+
+.stagger-reveal.visible>*:nth-child(6) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 500ms;
+}
+
+.stagger-reveal.visible>*:nth-child(7) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 600ms;
+}
+
+.stagger-reveal.visible>*:nth-child(8) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 700ms;
+}
+
+/* ================================================================
+   TEXTURES & OVERLAYS
+   ================================================================ */
+
+/* Film grain texture overlay */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  animation: grain 8s steps(10) infinite;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* ================================================================
+   GLOBAL BEHAVIORS
+   ================================================================ */
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior: none;
+}
+
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background: hsl(100 53% 20% / 0.15);
+  color: hsl(100 53% 20%);
+}
+
+/* ================================================================
+   SECTION UTILITIES
+   ================================================================ */
+
+/* Subtle leaf/organic divider between sections */
+.section-divider {
+  position: relative;
+}
+
+.section-divider::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--amber) / 0.4), transparent);
+  margin: 0 auto;
+}
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.12);
+}
+
+/* Masonry gallery layout */
+.masonry-gallery {
+  columns: 2;
+  column-gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .masonry-gallery {
+    columns: 3;
+    column-gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-gallery {
+    columns: 4;
+    column-gap: 1rem;
+  }
+}
+
+.masonry-gallery>* {
+  break-inside: avoid;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .masonry-gallery>* {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Mobile horizontal scroll snap */
+.scroll-snap-x {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scroll-snap-x::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-snap-x>* {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Accent line decoration */
+.accent-line::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 2px;
+  background: hsl(var(--amber));
+  margin-top: 1rem;
+}
+
+.accent-line-center::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 2px;
+  background: hsl(var(--amber));
+  margin: 1rem auto 0;
+}

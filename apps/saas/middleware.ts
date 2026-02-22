@@ -20,13 +20,26 @@ export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const response = NextResponse.next();
 
+    // Security headers applied to ALL responses (HTML + API)
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    // Prevent caching of API responses that may contain sensitive data
+    if (pathname.startsWith('/api/')) {
+        response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+
     // Pass the full URL as a header so server components can read query params
     response.headers.set('x-url', request.url);
 
     // Resolve tenant from subdomain or query param
     const host = request.headers.get('host') || '';
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'budabook.com';
-    let tenantSlug = 'taglucop'; // default
+    // Default to empty in production — forces 404 if no tenant resolved
+    let tenantSlug = process.env.NODE_ENV === 'development'
+        ? (process.env.DEFAULT_TENANT_SLUG || 'taglucop')
+        : '';
 
     // Check query param
     const tenantParam = request.nextUrl.searchParams.get('tenant');

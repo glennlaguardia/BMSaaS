@@ -21,6 +21,8 @@ export const createBookingSchema = z.object({
   guest_email: z.string().email().max(255),
   guest_phone: z.string().min(1).max(50),
   special_requests: z.string().max(1000).optional().nullable(),
+  food_restrictions: z.string().max(1000).optional().nullable(),
+  voucher_code: z.string().max(50).optional().nullable(),
   addon_ids: z.array(z.string().min(1)).optional().default([]),
   addon_quantities: z.array(z.number().int().min(1)).optional().default([]),
   addon_prices: z.array(z.number().min(0).max(999999)).optional().default([]),
@@ -31,7 +33,10 @@ export const createBookingSchema = z.object({
   addons_amount: z.number().min(0).max(999999).optional().default(0),
   discount_amount: z.number().min(0).max(999999).optional().default(0),
   total_amount: z.number().min(0).max(9999999).optional().default(0),
-});
+}).refine(
+  (data) => data.check_in_date < data.check_out_date,
+  { message: 'Check-in date must be before check-out date', path: ['check_out_date'] }
+);
 
 const roomInGroupSchema = z.object({
   room_id: z.string().min(1),
@@ -56,9 +61,14 @@ export const createBookingGroupSchema = z.object({
   guest_email: z.string().email().max(255),
   guest_phone: z.string().min(1).max(50),
   special_requests: z.string().max(1000).optional().nullable(),
+  food_restrictions: z.string().max(1000).optional().nullable(),
+  voucher_code: z.string().max(50).optional().nullable(),
   source: z.enum(['online', 'manual', 'phone', 'facebook', 'walk_in']).optional().default('online'),
-  rooms: z.array(roomInGroupSchema).min(1, 'At least one room is required'),
-});
+  rooms: z.array(roomInGroupSchema).min(1, 'At least one room is required').max(10),
+}).refine(
+  (data) => data.check_in_date < data.check_out_date,
+  { message: 'Check-in date must be before check-out date', path: ['check_out_date'] }
+);
 
 // ---- Day Tour Booking ----
 export const createDayTourBookingSchema = z.object({
@@ -214,6 +224,7 @@ export const paginationSchema = z.object({
 
 export const bookingFilterSchema = paginationSchema.extend({
   status: z.enum(['all', 'pending', 'confirmed', 'paid', 'checked_in', 'checked_out', 'cancelled', 'no_show', 'expired']).default('all'),
+  payment_status: z.enum(['all', 'unpaid', 'pending_verification', 'paid', 'refunded']).default('all'),
   search: z.string().max(200).default(''),
   booking_group_id: z.string().max(100).optional(),
   from_date: z.string().regex(dateRegex, 'Invalid date format').optional(),
@@ -263,8 +274,39 @@ export const publicDateRangeSchema = z.object({
   type_ids: z.string().max(1000).optional(),
 });
 
+// ---- Voucher Management ----
+export const createVoucherSchema = z.object({
+  code: z.string().min(2).max(50).transform(v => v.toUpperCase().trim()),
+  description: z.string().max(500).optional().nullable(),
+  discount_type: z.enum(['percentage', 'fixed']),
+  discount_value: z.number().positive().max(999999),
+  min_booking_amount: z.number().min(0).max(999999).optional().default(0),
+  max_discount: z.number().positive().max(999999).optional().nullable(),
+  usage_limit: z.number().int().positive().optional().nullable(),
+  valid_from: z.string().regex(dateRegex).optional().nullable(),
+  valid_until: z.string().regex(dateRegex).optional().nullable(),
+  applies_to: z.enum(['overnight', 'day_tour', 'both']).default('both'),
+  is_active: z.boolean().default(true),
+});
+
+export const updateVoucherSchema = createVoucherSchema.partial();
+
+export const voucherFilterSchema = paginationSchema.extend({
+  search: z.string().max(200).default(''),
+  status: z.enum(['all', 'active', 'inactive', 'expired']).default('all'),
+});
+
+export const validateVoucherSchema = z.object({
+  code: z.string().min(1).max(50).transform(v => v.toUpperCase().trim()),
+  booking_type: z.enum(['overnight', 'day_tour']).default('overnight'),
+  booking_amount: z.number().min(0).optional().default(0),
+});
+
 // ---- Type Exports ----
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type CreateDayTourBookingInput = z.infer<typeof createDayTourBookingSchema>;
 export type CalculatePriceInput = z.infer<typeof calculatePriceSchema>;
+export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
+export type ValidateVoucherInput = z.infer<typeof validateVoucherSchema>;
+

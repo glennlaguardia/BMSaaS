@@ -2,7 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, ArrowRight, Check, Loader2, Calendar, Home as HomeIcon, Users, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Tenant, AccommodationType, Addon, Room, BookingPriceState } from '@/types';
 
@@ -88,6 +89,7 @@ export function BookingWizard({ tenant, accommodationTypes, addons, prefill, ret
   const hasPrefill = prefill && (prefill.checkIn || prefill.firstName);
   const [step, setStep] = useState(hasPrefill && prefill?.checkIn ? 2 : 1);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [state, setState] = useState<BookingState>({
     checkIn: prefill?.checkIn || '',
     checkOut: prefill?.checkOut || '',
@@ -510,19 +512,12 @@ export function BookingWizard({ tenant, accommodationTypes, addons, prefill, ret
               </Button>
             ) : (
               <Button
-                onClick={handleSubmit}
+                onClick={() => setShowConfirmDialog(true)}
                 disabled={submitting}
                 variant="amber"
                 className="rounded-full px-8"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  'Confirm Booking'
-                )}
+                Confirm Booking
               </Button>
             )}
           </div>
@@ -531,6 +526,86 @@ export function BookingWizard({ tenant, accommodationTypes, addons, prefill, ret
         {/* Cost Breakdown Sidebar */}
         <BookingCostBreakdown state={state} updateState={updateState} currentStep={step} />
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-forest-700">Confirm Your Booking</DialogTitle>
+            <DialogDescription className="text-forest-500/60">
+              Please review your booking details before confirming.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-3">
+              <Calendar className="w-4 h-4 text-forest-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-forest-700">{state.checkIn} → {state.checkOut}</p>
+                <p className="text-forest-500/50">{state.pricing?.totalNights || 0} night{(state.pricing?.totalNights || 0) !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <HomeIcon className="w-4 h-4 text-forest-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-forest-700">{state.accommodationType?.name || '—'}</p>
+                <p className="text-forest-500/50">
+                  {state.selectedRooms.length > 1
+                    ? `${state.selectedRooms.length} rooms: ${state.selectedRooms.map(r => r.name).join(', ')}`
+                    : state.room?.name || '—'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <Users className="w-4 h-4 text-forest-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">
+                <p className="font-medium text-forest-700">
+                  {state.numAdults} adult{state.numAdults !== 1 ? 's' : ''}
+                  {state.numChildren > 0 && `, ${state.numChildren} child${state.numChildren !== 1 ? 'ren' : ''}`}
+                </p>
+                <p className="text-forest-500/50">{state.firstName} {state.lastName}</p>
+              </div>
+            </div>
+            {state.pricing && (
+              <div className="flex items-start gap-3">
+                <CreditCard className="w-4 h-4 text-forest-500 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-forest-700">Total: ₱{(state.pricing.grandTotal || 0).toLocaleString()}</p>
+                  {state.voucherCode && (
+                    <p className="text-amber-600 text-xs">Voucher: {state.voucherCode}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+              className="rounded-full"
+            >
+              Go Back
+            </Button>
+            <Button
+              onClick={() => {
+                setShowConfirmDialog(false);
+                handleSubmit();
+              }}
+              disabled={submitting}
+              variant="amber"
+              className="rounded-full px-6"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Confirm & Submit'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

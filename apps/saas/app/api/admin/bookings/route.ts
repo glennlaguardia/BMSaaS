@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
       p_addon_ids: data.addon_ids || [],
       p_addon_quantities: data.addon_quantities || data.addon_ids?.map(() => 1) || [],
       p_addon_prices: data.addon_prices || [],
+      p_food_restrictions: data.food_restrictions || null,
+      p_voucher_code: data.voucher_code || null,
     });
 
     if (result.error) {
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const parsed = bookingFilterSchema.safeParse({
       status: searchParams.get('status') ?? undefined,
+      payment_status: searchParams.get('payment_status') ?? undefined,
       page: searchParams.get('page') ?? undefined,
       limit: searchParams.get('limit') ?? undefined,
       search: searchParams.get('search') ?? undefined,
@@ -104,7 +107,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors }, { status: 400 });
     }
     const filters = parsed.data;
-    const { status, page, limit, search, from_date, to_date, sort_by, sort_order } = filters;
+    const { status, payment_status, page, limit, search, from_date, to_date, sort_by, sort_order } = filters;
 
     const supabase = createAdminClient();
     let query = supabase
@@ -114,6 +117,10 @@ export async function GET(request: NextRequest) {
 
     if (status && status !== 'all') {
       query = query.eq('status', status);
+    }
+
+    if (payment_status && payment_status !== 'all') {
+      query = query.eq('payment_status', payment_status);
     }
 
     if (search) {

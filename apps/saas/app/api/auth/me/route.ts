@@ -12,10 +12,8 @@ export async function GET() {
       );
     }
 
-    // Don't return the password hash
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password_hash, ...safeAdmin } = admin;
-    return NextResponse.json({ success: true, data: safeAdmin });
+    // password_hash is never selected by getAdminUser(), safe to return directly
+    return NextResponse.json({ success: true, data: admin });
   } catch (error) {
     console.error('[auth/me] error:', error);
     return NextResponse.json(

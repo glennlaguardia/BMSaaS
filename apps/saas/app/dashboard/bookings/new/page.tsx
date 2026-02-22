@@ -1,13 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { ArrowLeft, Loader2, Check, Users, Calendar, Phone, Mail, User, MessageSquare } from 'lucide-react';
 import { formatPHP } from '@/lib/pricing';
+import { cn } from '@/lib/utils';
+import { format as fmtDate } from 'date-fns';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 interface AccommodationType {
   id: string;
@@ -49,7 +54,10 @@ const SOURCES = [
   { value: 'manual', label: 'Manual Entry' },
 ];
 
-export default function NewManualBookingPage() {
+function NewManualBookingContent() {
+  const searchParams = useSearchParams();
+  const initialSource = searchParams.get('source') || 'walk_in';
+  const isWalkIn = initialSource === 'walk_in';
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ booking_id: string; reference_number: string } | null>(null);
@@ -62,19 +70,24 @@ export default function NewManualBookingPage() {
   const [pricingLoading, setPricingLoading] = useState(false);
 
   // Form state
-  const [form, setForm] = useState({
-    source: 'walk_in',
-    accommodation_type_id: '',
-    room_id: '',
-    check_in_date: '',
-    check_out_date: '',
-    num_adults: 1,
-    num_children: 0,
-    guest_first_name: '',
-    guest_last_name: '',
-    guest_email: '',
-    guest_phone: '',
-    special_requests: '',
+  const [form, setForm] = useState(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return {
+      source: initialSource,
+      accommodation_type_id: '',
+      room_id: '',
+      check_in_date: isWalkIn ? today.toISOString().split('T')[0] : '',
+      check_out_date: isWalkIn ? tomorrow.toISOString().split('T')[0] : '',
+      num_adults: 1,
+      num_children: 0,
+      guest_first_name: '',
+      guest_last_name: '',
+      guest_email: '',
+      guest_phone: '',
+      special_requests: '',
+    };
   });
   const [selectedAddonIds, setSelectedAddonIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
@@ -290,7 +303,17 @@ export default function NewManualBookingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Select value={form.source} onValueChange={v => setForm(f => ({ ...f, source: v }))}>
+                <Select value={form.source} onValueChange={v => {
+                  const updates: Record<string, string> = { source: v };
+                  if (v === 'walk_in') {
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    updates.check_in_date = today.toISOString().split('T')[0];
+                    updates.check_out_date = tomorrow.toISOString().split('T')[0];
+                  }
+                  setForm(f => ({ ...f, ...updates }));
+                }}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -315,21 +338,62 @@ export default function NewManualBookingPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-forest-700 mb-1.5">Check-in</label>
-                    <Input
-                      type="date"
-                      value={form.check_in_date}
-                      onChange={e => setForm(f => ({ ...f, check_in_date: e.target.value }))}
-                      required
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !form.check_in_date && 'text-muted-foreground'
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {form.check_in_date ? fmtDate(new Date(form.check_in_date), 'MMM d, yyyy') : 'Select date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarPicker
+                          mode="single"
+                          selected={form.check_in_date ? new Date(form.check_in_date) : undefined}
+                          onSelect={(date) => {
+                            if (date) setForm(f => ({ ...f, check_in_date: fmtDate(date, 'yyyy-MM-dd') }));
+                          }}
+                          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-forest-700 mb-1.5">Check-out</label>
-                    <Input
-                      type="date"
-                      value={form.check_out_date}
-                      onChange={e => setForm(f => ({ ...f, check_out_date: e.target.value }))}
-                      required
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            'w-full justify-start text-left font-normal',
+                            !form.check_out_date && 'text-muted-foreground'
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {form.check_out_date ? fmtDate(new Date(form.check_out_date), 'MMM d, yyyy') : 'Select date'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarPicker
+                          mode="single"
+                          selected={form.check_out_date ? new Date(form.check_out_date) : undefined}
+                          onSelect={(date) => {
+                            if (date) setForm(f => ({ ...f, check_out_date: fmtDate(date, 'yyyy-MM-dd') }));
+                          }}
+                          disabled={(date) => {
+                            const minDate = form.check_in_date
+                              ? new Date(new Date(form.check_in_date).getTime() + 86400000)
+                              : new Date(new Date().setHours(0, 0, 0, 0));
+                            return date < minDate;
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </CardContent>
@@ -506,11 +570,10 @@ export default function NewManualBookingPage() {
                           key={addon.id}
                           type="button"
                           onClick={() => toggleAddon(addon.id)}
-                          className={`text-left p-3 rounded-lg border-2 transition-all ${
-                            selected
-                              ? 'border-terracotta-400 bg-terracotta-50'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
+                          className={`text-left p-3 rounded-lg border-2 transition-all ${selected
+                            ? 'border-terracotta-400 bg-terracotta-50'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-sm text-forest-700">{addon.name}</span>
@@ -640,5 +703,17 @@ export default function NewManualBookingPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewManualBookingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-forest-500" />
+      </div>
+    }>
+      <NewManualBookingContent />
+    </Suspense>
   );
 }

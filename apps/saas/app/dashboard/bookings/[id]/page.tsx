@@ -52,6 +52,16 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
       .then(data => {
         if (data.success) {
           setBooking(data.data);
+
+          // Mark as read (fire-and-forget)
+          if (data.data && !data.data.is_read) {
+            fetch(`/api/admin/bookings/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mark_read: true }),
+            }).catch(() => { });
+          }
+
           const bid = data.data?.booking_group_id;
           if (bid) {
             return fetch(`/api/admin/bookings?booking_group_id=${encodeURIComponent(bid)}&limit=50`)
@@ -192,7 +202,6 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                     <SelectTrigger><SelectValue placeholder="Choose status…" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
                       <SelectItem value="checked_in">Checked In</SelectItem>
                       <SelectItem value="checked_out">Checked Out</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -273,7 +282,6 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                     <SelectContent>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="paid">Paid</SelectItem>
                       <SelectItem value="checked_in">Checked In</SelectItem>
                       <SelectItem value="checked_out">Checked Out</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -322,18 +330,23 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                   <p className="font-medium capitalize">{booking.source}</p>
                 </div>
               </div>
-              {booking.special_requests && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-forest-500/45 text-sm">Special Requests</p>
-                  <p className="text-sm mt-1">{booking.special_requests}</p>
+              {/* Notes Section */}
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <div>
+                  <p className="text-forest-500/45 text-sm flex items-center gap-1.5">
+                    Special Requests
+                  </p>
+                  <p className="text-sm mt-1">{booking.special_requests || <span className="text-forest-500/30 italic">None</span>}</p>
                 </div>
-              )}
-              {booking.food_restrictions && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-forest-500/45 text-sm">Food Restrictions / Allergies</p>
-                  <p className="text-sm mt-1">{booking.food_restrictions}</p>
+                <div>
+                  <p className="text-forest-500/45 text-sm flex items-center gap-1.5">
+                    🍽️ Food Restrictions / Allergies
+                  </p>
+                  <p className={`text-sm mt-1 ${booking.food_restrictions ? 'text-amber-700 font-medium bg-amber-50 px-2 py-1 rounded' : ''}`}>
+                    {booking.food_restrictions || <span className="text-forest-500/30 italic">None</span>}
+                  </p>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
@@ -406,29 +419,29 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
           {/* Pricing */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Pricing</CardTitle>
+              <CardTitle className="text-base">Cost Breakdown</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-forest-500/45">Base Amount</span>
-                <span>{formatPHP(booking.base_amount)}</span>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-forest-500/55">Base Amount</span>
+                <span className="text-base font-semibold text-forest-700">{formatPHP(booking.base_amount)}</span>
               </div>
               {booking.pax_surcharge > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-forest-500/45">Pax Surcharge</span>
-                  <span>{formatPHP(booking.pax_surcharge)}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-forest-500/55">Pax Surcharge</span>
+                  <span className="text-base font-semibold text-forest-700">+{formatPHP(booking.pax_surcharge)}</span>
                 </div>
               )}
               {booking.addons_amount > 0 && (
                 <>
-                  <div className="flex justify-between">
-                    <span className="text-forest-500/45">Add-ons</span>
-                    <span>{formatPHP(booking.addons_amount)}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-forest-500/55">Add-ons</span>
+                    <span className="text-base font-semibold text-forest-700">+{formatPHP(booking.addons_amount)}</span>
                   </div>
                   {booking.booking_addons && booking.booking_addons.length > 0 && (
-                    <div className="pl-3 space-y-1">
+                    <div className="pl-4 space-y-1.5 border-l-2 border-forest-100 ml-1">
                       {booking.booking_addons.map((ba) => (
-                        <div key={ba.id} className="flex justify-between text-xs text-forest-500/50">
+                        <div key={ba.id} className="flex justify-between text-sm text-forest-500/50">
                           <span>{ba.addons?.name ?? 'Add-on'} ×{ba.quantity}</span>
                           <span>{formatPHP(ba.total_price)}</span>
                         </div>
@@ -438,20 +451,20 @@ export default function BookingDetailPage({ params }: { params: { id: string } }
                 </>
               )}
               {booking.discount_amount > 0 && (
-                <div className="flex justify-between text-forest-500">
-                  <span>Discount</span>
-                  <span>-{formatPHP(booking.discount_amount)}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-green-600">Discount</span>
+                  <span className="text-base font-semibold text-green-600">-{formatPHP(booking.discount_amount)}</span>
                 </div>
               )}
               {booking.voucher_code && (
-                <div className="flex justify-between text-xs">
-                  <span className="text-forest-500/45">Voucher</span>
-                  <span className="font-mono text-forest-600">{booking.voucher_code}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-forest-500/55">Voucher</span>
+                  <span className="font-mono text-sm font-semibold text-amber-600">{booking.voucher_code}</span>
                 </div>
               )}
-              <div className="flex justify-between pt-2 border-t font-bold">
-                <span>Total</span>
-                <span className="text-lg">{formatPHP(booking.total_amount)}</span>
+              <div className="flex justify-between items-center pt-3 mt-1 border-t-2 border-forest-200">
+                <span className="text-base font-bold text-forest-700">Total</span>
+                <span className="text-2xl font-bold text-forest-800">{formatPHP(booking.total_amount)}</span>
               </div>
             </CardContent>
           </Card>

@@ -53,8 +53,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create a unique file path
-    const ext = file.name.split('.').pop() || 'jpg';
+    // Derive extension from validated MIME type (not user-provided filename)
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
+    const ext = mimeToExt[file.type] || 'jpg';
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
     const filePath = `${session.tenant_id}/${folder}/${timestamp}-${randomStr}.${ext}`;

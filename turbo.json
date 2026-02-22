@@ -1,5 +1,10 @@
 {
     "$schema": "https://turbo.build/schema.json",
+    "globalEnv": [
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "JWT_SECRET",
+        "BCRYPT_SALT_ROUNDS"
+    ],
     "tasks": {
         "dev": {
             "cache": false,

@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { updateBookingStatusSchema, updatePaymentStatusSchema } from '@/lib/validations';
 import { sendBookingConfirmation, sendCancellationNotice } from '@/lib/email';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,6 +17,9 @@ export async function GET(
     }
 
     const { id } = await params;
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid booking ID' }, { status: 400 });
+    }
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
@@ -44,8 +49,22 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    if (!UUID_RE.test(id)) {
+      return NextResponse.json({ success: false, error: 'Invalid booking ID' }, { status: 400 });
+    }
     const body = await request.json();
     const supabase = createAdminClient();
+
+    // Handle mark-as-read (lightweight, no status logging)
+    if (body.mark_read === true) {
+      const { error: readErr } = await supabase
+        .from('bookings')
+        .update({ is_read: true })
+        .eq('id', id)
+        .eq('tenant_id', session.tenant_id);
+      if (readErr) throw readErr;
+      return NextResponse.json({ success: true });
+    }
 
     // Determine if this is a status or payment_status update
     if (body.status) {

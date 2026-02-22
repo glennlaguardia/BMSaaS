@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ChevronLeft, ChevronRight, Bed, Sun } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, ChevronLeft, ChevronRight, Bed, Sun, CalendarCheck } from 'lucide-react';
 import { cn, statusColor, statusLabel } from '@/lib/utils';
+import Link from 'next/link';
 
 interface CalendarBooking {
   id: string;
@@ -38,6 +40,10 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  // Filters
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'bookings' | 'day_tours'
+
   useEffect(() => {
     setLoading(true);
     fetch(`/api/admin/calendar?month=${month}&year=${year}`)
@@ -61,7 +67,31 @@ export default function CalendarPage() {
     setSelectedDate(null);
   };
 
+  const goToToday = useCallback(() => {
+    const now = new Date();
+    setMonth(now.getMonth() + 1);
+    setYear(now.getFullYear());
+    setSelectedDate(now.toISOString().split('T')[0]);
+  }, []);
+
   const monthLabel = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Apply filters
+  const filteredBookings = useMemo(() => {
+    let result = bookings;
+    if (statusFilter !== 'all') {
+      result = result.filter(b => b.status === statusFilter);
+    }
+    return result;
+  }, [bookings, statusFilter]);
+
+  const filteredDayTours = useMemo(() => {
+    let result = dayTours;
+    if (statusFilter !== 'all') {
+      result = result.filter(dt => dt.status === statusFilter);
+    }
+    return result;
+  }, [dayTours, statusFilter]);
 
   // Build calendar grid
   const calendarDays = useMemo(() => {
@@ -77,35 +107,89 @@ export default function CalendarPage() {
   const eventsByDate = useMemo(() => {
     const map: Record<string, { bookings: CalendarBooking[]; dayTours: CalendarDayTour[] }> = {};
 
-    for (const b of bookings) {
-      const checkIn = new Date(b.check_in_date);
-      const checkOut = new Date(b.check_out_date);
-      const cursor = new Date(checkIn);
-      while (cursor < checkOut) {
-        const key = cursor.toISOString().split('T')[0];
-        if (!map[key]) map[key] = { bookings: [], dayTours: [] };
-        map[key].bookings.push(b);
-        cursor.setDate(cursor.getDate() + 1);
+    if (typeFilter !== 'day_tours') {
+      for (const b of filteredBookings) {
+        const checkIn = new Date(b.check_in_date);
+        const checkOut = new Date(b.check_out_date);
+        const cursor = new Date(checkIn);
+        while (cursor < checkOut) {
+          const key = cursor.toISOString().split('T')[0];
+          if (!map[key]) map[key] = { bookings: [], dayTours: [] };
+          map[key].bookings.push(b);
+          cursor.setDate(cursor.getDate() + 1);
+        }
       }
     }
 
-    for (const dt of dayTours) {
-      const key = dt.tour_date;
-      if (!map[key]) map[key] = { bookings: [], dayTours: [] };
-      map[key].dayTours.push(dt);
+    if (typeFilter !== 'bookings') {
+      for (const dt of filteredDayTours) {
+        const key = dt.tour_date;
+        if (!map[key]) map[key] = { bookings: [], dayTours: [] };
+        map[key].dayTours.push(dt);
+      }
     }
 
     return map;
-  }, [bookings, dayTours]);
+  }, [filteredBookings, filteredDayTours, typeFilter]);
 
   const selectedEvents = selectedDate ? eventsByDate[selectedDate] : null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-forest-700">Booking Calendar</h1>
-        <p className="text-sm text-forest-500/45 mt-1">Visual overview of reservations and day tours</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-forest-700">Booking Calendar</h1>
+          <p className="text-sm text-forest-500/45 mt-1">Visual overview of reservations and day tours</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={goToToday}>
+          <CalendarCheck className="w-4 h-4 mr-2" />
+          Today
+        </Button>
       </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-5 pb-5">
+          <div className="flex flex-wrap gap-3 items-center">
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="bookings">Overnight Only</SelectItem>
+                <SelectItem value="day_tours">Day Tours Only</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="checked_in">Checked In</SelectItem>
+                <SelectItem value="checked_out">Checked Out</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="no_show">No Show</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center gap-2 ml-auto text-xs text-forest-500/50">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-forest-50 border border-forest-200" />
+                <span>Overnight</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-amber-50 border border-amber-200" />
+                <span>Day Tour</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-3">
@@ -205,7 +289,11 @@ export default function CalendarPage() {
             ) : (
               <div className="space-y-3">
                 {selectedEvents.bookings.map(b => (
-                  <div key={b.id} className="flex items-center justify-between p-3 rounded-lg bg-cream-50 border">
+                  <Link
+                    key={b.id}
+                    href={`/dashboard/bookings/${b.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-cream-50 border hover:bg-cream-100 transition-colors cursor-pointer"
+                  >
                     <div>
                       <p className="font-medium text-forest-700 text-sm">
                         {b.guest_first_name} {b.guest_last_name}
@@ -218,10 +306,14 @@ export default function CalendarPage() {
                     <Badge variant={statusColor(b.status)} className="text-xs">
                       {statusLabel(b.status)}
                     </Badge>
-                  </div>
+                  </Link>
                 ))}
                 {selectedEvents.dayTours.map(dt => (
-                  <div key={dt.id} className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <Link
+                    key={dt.id}
+                    href={`/dashboard/day-tours/${dt.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors cursor-pointer"
+                  >
                     <div>
                       <p className="font-medium text-amber-900 text-sm flex items-center gap-1">
                         <Sun className="w-3.5 h-3.5" />
@@ -234,7 +326,7 @@ export default function CalendarPage() {
                     <Badge variant={statusColor(dt.status)} className="text-xs">
                       {statusLabel(dt.status)}
                     </Badge>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

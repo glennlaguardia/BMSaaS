@@ -7,10 +7,24 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Search, Eye, ChevronLeft, ChevronRight, Loader2, Plus, CalendarDays } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader2, Plus, CalendarDays, UserPlus } from 'lucide-react';
 import { formatDate, statusLabel, statusColor } from '@/lib/utils';
 import { formatPHP } from '@/lib/pricing';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+/** Relative time helper, e.g. "2h ago", "3d ago" */
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return formatDate(dateStr);
+}
 
 interface Booking {
   id: string;
@@ -25,6 +39,7 @@ interface Booking {
   total_amount: number;
   source: string;
   created_at: string;
+  is_read: boolean;
   booking_group_id: string | null;
   rooms: { name: string } | null;
   accommodation_types: { name: string } | null;
@@ -34,7 +49,7 @@ interface Booking {
 /** One row in the list: either a standalone booking or a group (one row per group). */
 type BookingRow =
   | { type: 'single'; booking: Booking }
-  | { type: 'group'; ref: string; guest: string; guestEmail: string; roomLabel: string; checkIn: string; checkOut: string; status: string; paymentStatus: string; totalAmount: number; firstBookingId: string; count: number };
+  | { type: 'group'; ref: string; guest: string; guestEmail: string; roomLabel: string; checkIn: string; checkOut: string; status: string; paymentStatus: string; totalAmount: number; firstBookingId: string; count: number; createdAt: string; isRead: boolean };
 
 function toRows(bookings: Booking[]): BookingRow[] {
   const byGroup = new Map<string, Booking[]>();
@@ -64,6 +79,8 @@ function toRows(bookings: Booking[]): BookingRow[] {
         totalAmount,
         firstBookingId: first.id,
         count: groupBookings.length,
+        createdAt: first.created_at,
+        isRead: groupBookings.every(b => b.is_read),
       });
     }
   }
@@ -71,10 +88,12 @@ function toRows(bookings: Booking[]): BookingRow[] {
 }
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [paymentStatus, setPaymentStatus] = useState('all');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
@@ -86,11 +105,12 @@ export default function BookingsPage() {
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
-      sort_by: 'status_priority',
-      sort_order: 'asc',
+      sort_by: 'created_at',
+      sort_order: 'desc',
     });
     if (search) params.set('search', search);
     if (status !== 'all') params.set('status', status);
+    if (paymentStatus !== 'all') params.set('payment_status', paymentStatus);
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
 
@@ -101,7 +121,7 @@ export default function BookingsPage() {
       setTotal(data.pagination.total);
     }
     setLoading(false);
-  }, [page, search, status, fromDate, toDate]);
+  }, [page, search, status, paymentStatus, fromDate, toDate]);
 
   useEffect(() => { fetchBookings(); }, [fetchBookings]);
 
@@ -115,12 +135,20 @@ export default function BookingsPage() {
           <h1 className="text-2xl font-bold text-forest-700">Bookings</h1>
           <p className="text-sm text-forest-500/45 mt-1">{total} total bookings</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/bookings/new">
-            <Plus className="w-4 h-4 mr-2" />
-            New Booking
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/dashboard/bookings/new?source=walk_in">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Walk-in
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/bookings/new">
+              <Plus className="w-4 h-4 mr-2" />
+              New Booking
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -144,15 +172,82 @@ export default function BookingsPage() {
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
                 <SelectItem value="checked_in">Checked In</SelectItem>
                 <SelectItem value="checked_out">Checked Out</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={paymentStatus} onValueChange={(v) => { setPaymentStatus(v); setPage(1); }}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Payment status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Payments</SelectItem>
+                <SelectItem value="unpaid">Unpaid</SelectItem>
+                <SelectItem value="pending_verification">Pending Verification</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="refunded">Refunded</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant={fromDate === new Date().toISOString().split('T')[0] && toDate === new Date().toISOString().split('T')[0] ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  setFromDate(today);
+                  setToDate(today);
+                  setPage(1);
+                }}
+              >
+                Today
+              </Button>
+              <Button
+                variant={(() => {
+                  const now = new Date();
+                  const day = now.getDay();
+                  const mon = new Date(now);
+                  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+                  const sun = new Date(mon);
+                  sun.setDate(mon.getDate() + 6);
+                  return fromDate === mon.toISOString().split('T')[0] && toDate === sun.toISOString().split('T')[0] ? 'default' : 'outline';
+                })()}
+                size="sm"
+                onClick={() => {
+                  const now = new Date();
+                  const day = now.getDay();
+                  const mon = new Date(now);
+                  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+                  const sun = new Date(mon);
+                  sun.setDate(mon.getDate() + 6);
+                  setFromDate(mon.toISOString().split('T')[0]);
+                  setToDate(sun.toISOString().split('T')[0]);
+                  setPage(1);
+                }}
+              >
+                This Week
+              </Button>
+              <Button
+                variant={(() => {
+                  const now = new Date();
+                  const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+                  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+                  return fromDate === first && toDate === last ? 'default' : 'outline';
+                })()}
+                size="sm"
+                onClick={() => {
+                  const now = new Date();
+                  setFromDate(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
+                  setToDate(new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]);
+                  setPage(1);
+                }}
+              >
+                This Month
+              </Button>
+            </div>
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-forest-500/35 flex-shrink-0" />
               <div>
@@ -200,6 +295,7 @@ export default function BookingsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left py-3 px-2 font-medium text-forest-500/45 w-4"></th>
                     <th className="text-left py-3 px-2 font-medium text-forest-500/45">Ref</th>
                     <th className="text-left py-3 px-2 font-medium text-forest-500/45">Guest</th>
                     <th className="text-left py-3 px-2 font-medium text-forest-500/45 hidden md:table-cell">Room</th>
@@ -207,13 +303,22 @@ export default function BookingsPage() {
                     <th className="text-left py-3 px-2 font-medium text-forest-500/45">Status</th>
                     <th className="text-left py-3 px-2 font-medium text-forest-500/45">Payment</th>
                     <th className="text-right py-3 px-2 font-medium text-forest-500/45">Amount</th>
-                    <th className="text-right py-3 px-2 font-medium text-forest-500/45"></th>
+                    <th className="text-right py-3 px-2 font-medium text-forest-500/45 hidden xl:table-cell">Booked On</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row) =>
                     row.type === 'single' ? (
-                      <tr key={row.booking.id} className="border-b last:border-0 hover:bg-forest-50">
+                      <tr
+                        key={row.booking.id}
+                        onClick={() => router.push(`/dashboard/bookings/${row.booking.id}`)}
+                        className="border-b last:border-0 hover:bg-forest-50/80 hover:shadow-sm transition-all cursor-pointer"
+                      >
+                        <td className="py-3 px-2 w-4">
+                          {!row.booking.is_read && (
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New booking" />
+                          )}
+                        </td>
                         <td className="py-3 px-2">
                           <span className="font-mono text-xs text-forest-700">{row.booking.reference_number}</span>
                         </td>
@@ -236,16 +341,21 @@ export default function BookingsPage() {
                         <td className="py-3 px-2 text-right font-medium text-forest-700">
                           {formatPHP(row.booking.total_amount)}
                         </td>
-                        <td className="py-3 px-2 text-right">
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/bookings/${row.booking.id}`}>
-                              <Eye className="w-4 h-4" />
-                            </Link>
-                          </Button>
+                        <td className="py-3 px-2 text-right hidden xl:table-cell text-xs text-forest-500/50">
+                          {timeAgo(row.booking.created_at)}
                         </td>
                       </tr>
                     ) : (
-                      <tr key={row.firstBookingId} className="border-b last:border-0 hover:bg-forest-50">
+                      <tr
+                        key={row.firstBookingId}
+                        onClick={() => router.push(`/dashboard/bookings/${row.firstBookingId}`)}
+                        className="border-b last:border-0 hover:bg-forest-50/80 hover:shadow-sm transition-all cursor-pointer"
+                      >
+                        <td className="py-3 px-2 w-4">
+                          {!row.isRead && (
+                            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New booking" />
+                          )}
+                        </td>
                         <td className="py-3 px-2">
                           <span className="font-mono text-xs text-forest-700">{row.ref}</span>
                           <span className="ml-1 text-forest-500/35">(group)</span>
@@ -267,12 +377,8 @@ export default function BookingsPage() {
                         <td className="py-3 px-2 text-right font-medium text-forest-700">
                           {formatPHP(row.totalAmount)}
                         </td>
-                        <td className="py-3 px-2 text-right">
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/bookings/${row.firstBookingId}`}>
-                              <Eye className="w-4 h-4" />
-                            </Link>
-                          </Button>
+                        <td className="py-3 px-2 text-right hidden xl:table-cell text-xs text-forest-500/50">
+                          {timeAgo(row.createdAt)}
                         </td>
                       </tr>
                     )

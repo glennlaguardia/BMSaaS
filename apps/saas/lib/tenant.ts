@@ -33,12 +33,12 @@ export async function getTenantSlug(): Promise<string> {
         if (subdomain && subdomain !== 'www') return subdomain;
     }
 
-    // Development fallback
+    // Development fallback — in production, return empty to force 404
     if (process.env.NODE_ENV === 'development') {
-        return 'taglucop';
+        return process.env.DEFAULT_TENANT_SLUG || 'taglucop';
     }
 
-    return 'taglucop';
+    return '';
 }
 
 /**

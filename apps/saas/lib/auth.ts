@@ -111,7 +111,7 @@ export async function getAdminUser() {
     const supabase = createAdminClient();
     const { data, error } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('id, username, full_name, role, tenant_id, is_active')
         .eq('id', session.admin_user_id)
         .eq('is_active', true)
         .single();
@@ -132,7 +132,7 @@ export async function authenticateAdmin(
 
     const { data: admin, error } = await supabase
         .from('admin_users')
-        .select('*')
+        .select('id, username, password_hash, role, tenant_id, is_active')
         .eq('username', username)
         .eq('is_active', true)
         .single();
