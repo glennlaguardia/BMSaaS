@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            BudaBook Admin
+            Taglucop Admin
           </h1>
           <p className="text-white/35 text-sm mt-1.5 font-medium">
             Sign in to manage your resort

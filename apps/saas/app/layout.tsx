@@ -15,7 +15,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "BudaBook Admin",
+  title: "Taglucop Admin",
   description: "BudaBook — Resort CRM & Booking Management System",
 };
 
